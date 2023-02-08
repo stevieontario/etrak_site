@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
-from streamlit_lottie import st_lottie
 
 import os
 path = os.path.dirname(__file__)
