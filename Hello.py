@@ -20,7 +20,7 @@ def load_lottieurl(url):
     return r.json()
 
 lottie_coding = load_lottieurl('https://assets4.lottiefiles.com/packages/lf20_ulfrygzw.json')
-image_contact_form = Image.open('/var/www/html/etrak_site/images/contact.png')
+image_contact_form = Image.open(path+'/images/contact.png')
 #waste_waffle = Image.open('/var/www/html/Documents/tw/waste_waffle.png-1.png')
 #st.experimental_rerun()
 

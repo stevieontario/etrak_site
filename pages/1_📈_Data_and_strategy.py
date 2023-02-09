@@ -6,13 +6,10 @@ import pandas as pd
 #import streamlit_lottie as stl
 import os
 
-cwd = os.getcwd()
-print('cwd: ', cwd)
-path_parent = os.path.dirname(cwd)
 relative_path = '/data/'
+path = os.path.dirname(__file__) #/var/www/html/etrak_site/pages
+path_parent = os.path.dirname(path)
 full_path = path_parent+relative_path
-print('full path: ',full_path)
-
 
 # https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title='emissionTrak home', page_icon='📈', layout='wide')
