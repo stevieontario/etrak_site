@@ -5,8 +5,13 @@ import numpy as np
 import pandas as pd
 import streamlit_lottie as stl
 import os
-import pathlib
-path = os.path.dirname(__file__)
+
+cwd = os.getcwd()
+print('cwd: ', cwd)
+path_parent = os.path.dirname(cwd)
+relative_path = '/data/'
+full_path = path_parent+relative_path
+print('full path: ',full_path)
 
 
 # https://www.webfx.com/tools/emoji-cheat-sheet/
@@ -35,7 +40,7 @@ with st.container():
         st.write(what_i_do)
     with right_column:
         st.header('How I do it')
-        df = pd.read_csv('/data/ECOMPCTNSA.csv')
+        df = pd.read_csv(full_path+'ECOMPCTNSA.csv')
         df = df.set_index('DATE')
         df.columns = ['e-commerce % change\n(not seasonally adjusted)']
         st.dataframe(df)

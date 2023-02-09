@@ -6,6 +6,7 @@ import requests
 
 import os
 path = os.path.dirname(__file__)
+print('path in Hello.py: ', path)
 import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 
