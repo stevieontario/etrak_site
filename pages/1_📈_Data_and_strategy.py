@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 import numpy as np
 import pandas as pd
-import streamlit_lottie as stl
+#import streamlit_lottie as stl
 import os
 
 cwd = os.getcwd()
@@ -29,7 +29,7 @@ heater_coding = load_lottieurl('https://assets8.lottiefiles.com/packages/lf20_FC
 temp_coding = load_lottieurl('https://assets8.lottiefiles.com/packages/lf20_m4znnezt.json')
 hotPerson_coding = load_lottieurl('https://assets8.lottiefiles.com/packages/lf20_medwe7cs.json')
 st.write('Cryo Systems Equipment primer on cryo freezing: http://www.cryobrain.com/nitrogen-vs-carbon-dioxide/. Also see Americold temp-controlled REIT, competitor of Lineage Logistics')
-stl.st_lottie(hotPerson_coding, width=200)
+#stl.st_lottie(hotPerson_coding, width=200)
 # --- WHAT I DO ---
 with st.container():
     st.write('---')
