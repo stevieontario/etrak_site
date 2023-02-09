@@ -28,7 +28,7 @@ image_contact_form = Image.open(path+'/images/contact.png')
 def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-local_css('/var/www/html/etrak_site/style/style.css')
+local_css(path+'/style/style.css')
 #--- HEADER SECTION ---
 with st.container():
     st.subheader('Welcome to emissionTrak&#8482; :wave:')
@@ -161,7 +161,6 @@ with st.container():
     initial_view_state=view_state,
     tooltip=tooltip,
     )
-    #r.to_html("on_ldc_weather_map.html")
     st.pydeck_chart(ldc_heating_map )
     heating_map_blurb = '''
     ***Most of what we think we know about energy usage is either wrong or drastically underestimated***. On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
