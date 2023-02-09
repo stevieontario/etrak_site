@@ -1,0 +1,4 @@
+### basic gitignore ###
+#Any file with "test" in its name
+/pages/*test*.py
+
