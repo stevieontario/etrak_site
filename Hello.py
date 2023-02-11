@@ -5,9 +5,15 @@ import numpy as np
 import requests
 import os
 path = os.path.dirname(__file__)
-print('path in Hello.py: ', path)
 import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
+
+def style_num(x):
+    cols = x.select_dtypes(np.number).columns
+    df1 = pd.DataFrame('', index=x.index, columns=x.columns)
+    df1[cols] = df1[cols].style.format("{:,.0f}")
+    return df1
+
 
 # https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title='emissionTrak home', page_icon=':sunflower:', layout='wide')
@@ -55,6 +61,15 @@ with st.container():
     ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Winter_Peak_Load_Without_Embedded_Generation_kW']
     
     dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+    dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+    dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
+    cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
+       'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
+       'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
+       'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
+       'total_w', 'total_w_per_dwelling']
+    print(dfs_orig.info())
+    dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
     
     # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
     ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
@@ -162,6 +177,8 @@ with st.container():
     tooltip=tooltip,
     )
     st.pydeck_chart(ldc_heating_map )
+
+    st.dataframe(dfs_orig.apply(style_num))
     heating_map_blurb = '''
     ***Most of what we think we know about energy usage is either wrong or drastically underestimated***. On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
