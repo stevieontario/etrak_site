@@ -63,6 +63,7 @@ with st.container():
     dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
     dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
     dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
+    numeric_cols = ['bearing', 'dewpoint', 'pressure', 'humidity', 'windspeed', 'temp', 'visibility', 'windchill', 'gust', 'realTemp', 'temp_delta', 'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w', 'floor_w', 'total_w', 'total_w_per_dwelling']
     cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
        'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
        'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
@@ -178,7 +179,7 @@ with st.container():
     )
     st.pydeck_chart(ldc_heating_map )
 
-    st.dataframe(dfs_orig.apply(style_num))
+    st.dataframe(dfs_orig.style.format(thousands=',', precision=2, subset=numeric_cols))
     heating_map_blurb = '''
     ***Most of what we think we know about energy usage is either wrong or drastically underestimated***. On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
