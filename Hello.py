@@ -69,8 +69,11 @@ with st.container():
        'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
        'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
        'total_w', 'total_w_per_dwelling']
-    print(dfs_orig.info())
+    print(dfs_orig.columns)
     dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
+
+    dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
+    dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
     
     # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
     ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
@@ -166,8 +169,16 @@ with st.container():
     lon = -80.4925
     #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
     view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=45)
+    tooltip_css = '''
+<div class="wrapper">
+  <p>Mobile tooltip</p>
+  <div class="tooltip-right tooltip-mobile" data-tooltip="This tooltip is centered on a mobile screen.">
+        <i class="fas fa-question-circle" focusable="false" aria-hidden="true"></i>
+    </div>
+    </div>
+    '''
     tooltip = {
-    "html": "<b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)",
+            "html": "<div class='wrapper'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
     "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
     }
     # Render
@@ -179,7 +190,13 @@ with st.container():
     )
     st.pydeck_chart(ldc_heating_map )
 
-    st.dataframe(dfs_orig.style.format(thousands=',', precision=2, subset=numeric_cols))
+    with st.expander('View the heat data for the map'):
+        heat_blurb = '''
+As of 
+        '''
+        heat_blurb = heat_blurb+dt
+        st.markdown(heat_blurb)
+        st.dataframe(dfs_orig.T.style.format(thousands=',', precision=2, subset=pd.IndexSlice[numeric_cols,:]))
     heating_map_blurb = '''
     ***Most of what we think we know about energy usage is either wrong or drastically underestimated***. On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
