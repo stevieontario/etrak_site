@@ -7,12 +7,12 @@ import os
 path = os.path.dirname(__file__)
 import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
+import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
 from bokeh.models import ColumnDataSource
 from bokeh.palettes import GnBu3, OrRd3
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div
-import bokeh as bk
 
 
 def style_num(x):
