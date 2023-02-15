@@ -213,6 +213,8 @@ with st.container():
     # --- ONTARIO "HEAT" MAP -- 
         df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
 
+        print(df.community_name)
+
         df= df.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
 
         #df = df.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
@@ -224,9 +226,7 @@ with st.container():
         z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
         df['COORDINATES'] = z
         df['total_w'] = df['total_w'].divide(1e6)
-        df = df.dropna()
 
-        print(df['condition'])
         df = df.copy()[['COORDINATES', 'datehour_my', 'total_w', 'community_name']]
 
                
