@@ -14,6 +14,9 @@ def style_num(x):
     df1[cols] = df1[cols].style.format("{:,.0f}")
     return df1
 
+def V_SPACE(lines):
+    for _ in range(lines):
+        st.write('&nbsp;')
 
 # https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title='emissionTrak home', page_icon=':sunflower:', layout='wide')
@@ -30,6 +33,7 @@ image_contact_form = Image.open(path+'/images/contact.png')
 #waste_waffle = Image.open('/var/www/html/Documents/tw/waste_waffle.png-1.png')
 #st.experimental_rerun()
 
+numeric_cols = ['bearing', 'dewpoint', 'pressure', 'humidity', 'windspeed', 'temp', 'visibility', 'windchill', 'gust', 'realTemp', 'temp_delta', 'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w', 'floor_w', 'total_w', 'total_w_per_dwelling']
 # --- USE LOCAL CSS ---
 def local_css(file_name):
     with open(file_name) as f:
@@ -42,161 +46,226 @@ with st.container():
     st.write('[Learn more >](http://canadianenergyissues.com)')
     st.markdown('#### How treacherous? Here&#8217;s a small example of the realities of energy demand')
     # --- ONTARIO LDC AND HEAT DEMAND MAP --
-    pd.set_option('display.float_format', lambda x: '{:,.0f}'.format(x))
-    ldcs = pd.read_csv(path+"/data/ldcs_service_area_peak_kw.csv", header=0).set_index('Company_Name')
-    ldcs = ldcs.astype(float)
-    ldc_data_categories = ['Year', 'Winter_Peak_Load_With_Embedded_Generation_kW',
-    'Summer_Peak_Load_With_Embedded_Generation_kW',
-    'Average_Peak_Load_With_Embedded_Generation_kW',
-    'Average_Load_Factor_With_Embedded_Generation_Percentage',
-    'Winter_Peak_Load_Without_Embedded_Generation_kW',
-    'Summer_Peak_Load_Without_Embedded_Generation_kW',
-    'Average_Peak_Load_Without_Embedded_Generation_kW',
-    'Average_Load_Factor_Without_Embedded_Generation_Percentage']
-    ldcs = ldcs[ldc_data_categories]
-    ldcs['Year'] = ldcs['Year'].astype(int)
-    gr = ldcs.groupby(ldcs.index).max()
-    
-    ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
-    ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Winter_Peak_Load_Without_Embedded_Generation_kW']
-    
-    dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
-    dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
-    dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
-    numeric_cols = ['bearing', 'dewpoint', 'pressure', 'humidity', 'windspeed', 'temp', 'visibility', 'windchill', 'gust', 'realTemp', 'temp_delta', 'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w', 'floor_w', 'total_w', 'total_w_per_dwelling']
-    cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
-       'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
-       'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
-       'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
-       'total_w', 'total_w_per_dwelling']
-    print(dfs_orig.columns)
-    dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
 
-    dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
-    dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
-    
-    # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
-    ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
-    'Ottawa Macdonald-Cartier Int\'l Airport',
-    'Toronto Pearson Int\'l Airport', 'Sault Ste. Marie Airport',
-    'Kingston Airport', 'Windsor Airport', 'Greater Sudbury Airport']
-    city_names = ['London', 'Thunder Bay', 'Ottawa', 'Toronto', 'Sault Ste. Marie', 'Kingston', 'Windsor', 'Sudbury']
-    ws_to_cityName_map = {e[0]:e[1] for e in zip(ws_names, city_names)}
-    ldc_for_map = ['London', 'Synergy', 'Hydro Ottawa', 'Toronto', 'Algoma', 'Kingston', 'ENWIN', 'Sudbury']
-    ldc_mapper = {e[0]:e[1] for e in zip(ws_names, ldc_for_map)}
-    
-    ldc_cols = ['Algoma Power Inc.', 'ENWIN Utilities Ltd.', 'Hydro Ottawa Limited',
-    'Kingston Hydro Corporation', 'London Hydro Inc.',
-    'Synergy North Corporation', 'Greater Sudbury Hydro Inc.', 'Toronto Hydro-Electric System Limited']
-    
-    dfs['ldc_abb'] = dfs.index.map(ldc_mapper)
-    match_kw_with_ldc = lambda df, s: np.array([df[df.index.str.contains(i)].iloc[:,1].values[0] for i in s])*1e3 # pd numerical indexer (iloc) picks element from ldc_data_categories
-    
-    dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
-    dfs = dfs.drop(columns=['ceiling_w', 'dwellings'])
-    
-    df = pd.read_csv(path+'/data/ontario_heat_demand.csv', header=0)
-    df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
-    df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
-    df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
-    df['Latitude'] = np.where(df.community_name=='Kenora', 49.766666, df.Latitude)
-    london_dict = {'community_name':'London', 'Longitude': -81.249725, 'Latitude':42.983612, 'total_w':np.nan}
-    ld = pd.DataFrame.from_dict(london_dict, orient='index')
-    df = pd.concat([df, ld.T])
-    df.index = np.arange(0, df.shape[0])
-    
-    z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
-    z1 = [list(t) for t in zip((df.Longitude.values)+0.1, df.Latitude.values)]
-    df['COORDINATES'] = z
-    df['COORDINATES_shifted'] = z1
-    df['total_w'] = df['total_w'].divide(1e6)
-    df['total_e_kw'] = df['total_w'].multiply(.5)
-    df = df.copy()[['COORDINATES', 'total_w', 'community_name', 'COORDINATES_shifted', 'total_e_kw']]
-    dfs_truncated_index = [i[:6] for i in dfs.index]
-    dfs_truncated_index = dfs_truncated_index[1:]+[dfs_truncated_index[0]]  
-    #dfs.index = dfs.index.str.replace('Greater ', '')
-    split_names = [s.split(' ')[0] for s in dfs.index]
-    
-    match_comm_names = lambda df, col: [df[df.community_name.str.contains(i)].loc[:,col].values[0] for i in split_names]
-    dfs['COORDINATES'] = match_comm_names(df, 'COORDINATES')
-    dfs['COORDINATES_shifted'] = dfs['COORDINATES']
-    #dfs['COORDINATES_shifted'] = [i for i in dfs['COORDINATES_shifted']]
-    dfs['COORDINATES_shifted'] = [[(i[0] - 0.3), i[1]] for i in dfs['COORDINATES_shifted']]
-    dfs['total_w'] =dfs['total_w'].divide(1e6)
-    dfs['ldc_wint_peak'] =dfs['ldc_wint_peak'].divide(1e6)
-    dfs.index = dfs.index.map(ws_to_cityName_map)
-    
-    dfs['community_name'] =dfs.index
-    
-    #dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
-    df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-    df['formatted_e_w'] = df['total_e_kw'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-    
-    dfs['formatted_w'] = dfs['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-    dfs['formatted_e_w'] = dfs['ldc_wint_peak'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-    dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'].values).strftime('%a %b %d, %I%p')
-    
-    layer = pdk.Layer(
-    "ColumnLayer",
-    data=dfs,
-    pickable=True,
-    extruded=True,
-    wireframe=True,
-    get_elevation='total_w',
-    radius=1.2e4,
-    #get_fill_color=["total_w ", "total_w * 25", "total_w ", 100],
-    get_fill_color=[50, 0, 0, 50],
-    elevation_scale=120,
-    get_position="COORDINATES",
-    auto_highlight=True
-    )
-    
-    layer2 = pdk.Layer(
-    "ColumnLayer",
-    data=dfs,
-    pickable=True,
-    extruded=True,
-    wireframe=True,
-    get_elevation='ldc_wint_peak',
-    radius=1.2e4,
-    #get_fill_color=["total_w * 25 ", "total_w", "total_w * 25 ", 200],
-    get_fill_color=[0, 50, 0, 50],
-    elevation_scale=120,
-    get_position="COORDINATES_shifted",
-    auto_highlight=True
-    )
-    lat = 43.4516 # kitchener on
-    lon = -80.4925
-    #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
-    view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=45)
-    tooltip_css = '''
-<div class="wrapper">
-  <p>Mobile tooltip</p>
-  <div class="tooltip-right tooltip-mobile" data-tooltip="This tooltip is centered on a mobile screen.">
-        <i class="fas fa-question-circle" focusable="false" aria-hidden="true"></i>
-    </div>
-    </div>
-    '''
-    tooltip = {
-            "html": "<div class='wrapper'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
-    "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
-    }
-    # Render
-    ldc_heating_map = pdk.Deck(
-    layers=[layer, layer2],
-    map_style='road',
-    initial_view_state=view_state,
-    tooltip=tooltip,
-    )
-    st.pydeck_chart(ldc_heating_map )
-
-    with st.expander('View the heat data for the map'):
-        heat_blurb = '''
-As of 
+    ldc_or_heat_list = ['Heat demand and selected LDC winter peak demand', 'Heat demand only']
+    ldc_or_heat = st.radio('Choose dataset', ldc_or_heat_list, index=0,  horizontal=True)
+    st.markdown('##### Ontario residential space heating demand')
+    space_heating = '''
+    On cold days, the demand for space heating in Ontario communities outstrips that for electricity.
         '''
-        heat_blurb = heat_blurb+dt
-        st.markdown(heat_blurb)
-        st.dataframe(dfs_orig.T.style.format(thousands=',', precision=2, subset=pd.IndexSlice[numeric_cols,:]))
+    st.markdown(space_heating)
+
+    if ldc_or_heat==ldc_or_heat_list[0]:
+        pd.set_option('display.float_format', lambda x: '{:,.0f}'.format(x))
+        ldcs = pd.read_csv(path+"/data/ldcs_service_area_peak_kw.csv", header=0).set_index('Company_Name')
+        ldcs = ldcs.astype(float)
+        ldc_data_categories = ['Year', 'Winter_Peak_Load_With_Embedded_Generation_kW',
+        'Summer_Peak_Load_With_Embedded_Generation_kW',
+        'Average_Peak_Load_With_Embedded_Generation_kW',
+        'Average_Load_Factor_With_Embedded_Generation_Percentage',
+        'Winter_Peak_Load_Without_Embedded_Generation_kW',
+        'Summer_Peak_Load_Without_Embedded_Generation_kW',
+        'Average_Peak_Load_Without_Embedded_Generation_kW',
+        'Average_Load_Factor_Without_Embedded_Generation_Percentage']
+        ldcs = ldcs[ldc_data_categories]
+        ldcs['Year'] = ldcs['Year'].astype(int)
+        gr = ldcs.groupby(ldcs.index).max()
+        
+        ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
+        ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Winter_Peak_Load_Without_Embedded_Generation_kW']
+        
+        dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+        dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+        dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
+        cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
+           'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
+           'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
+           'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
+           'total_w', 'total_w_per_dwelling']
+        dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
+
+        dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
+        dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
+        
+        # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
+        ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
+        'Ottawa Macdonald-Cartier Int\'l Airport',
+        'Toronto Pearson Int\'l Airport', 'Sault Ste. Marie Airport',
+        'Kingston Airport', 'Windsor Airport', 'Greater Sudbury Airport']
+        city_names = ['London', 'Thunder Bay', 'Ottawa', 'Toronto', 'Sault Ste. Marie', 'Kingston', 'Windsor', 'Sudbury']
+        ws_to_cityName_map = {e[0]:e[1] for e in zip(ws_names, city_names)}
+        ldc_for_map = ['London', 'Synergy', 'Hydro Ottawa', 'Toronto', 'Algoma', 'Kingston', 'ENWIN', 'Sudbury']
+        ldc_mapper = {e[0]:e[1] for e in zip(ws_names, ldc_for_map)}
+        
+        ldc_cols = ['Algoma Power Inc.', 'ENWIN Utilities Ltd.', 'Hydro Ottawa Limited',
+        'Kingston Hydro Corporation', 'London Hydro Inc.',
+        'Synergy North Corporation', 'Greater Sudbury Hydro Inc.', 'Toronto Hydro-Electric System Limited']
+        
+        dfs['ldc_abb'] = dfs.index.map(ldc_mapper)
+        match_kw_with_ldc = lambda df, s: np.array([df[df.index.str.contains(i)].iloc[:,1].values[0] for i in s])*1e3 # pd numerical indexer (iloc) picks element from ldc_data_categories
+        
+        dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
+        dfs = dfs.drop(columns=['ceiling_w', 'dwellings'])
+        
+        df = pd.read_csv(path+'/data/ontario_heat_demand.csv', header=0)
+        df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
+        df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
+        df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
+        df['Latitude'] = np.where(df.community_name=='Kenora', 49.766666, df.Latitude)
+        london_dict = {'community_name':'London', 'Longitude': -81.249725, 'Latitude':42.983612, 'total_w':np.nan}
+        ld = pd.DataFrame.from_dict(london_dict, orient='index')
+        df = pd.concat([df, ld.T])
+        df.index = np.arange(0, df.shape[0])
+        
+        z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
+        z1 = [list(t) for t in zip((df.Longitude.values)+0.1, df.Latitude.values)]
+        df['COORDINATES'] = z
+        df['COORDINATES_shifted'] = z1
+        df['total_w'] = df['total_w'].divide(1e6)
+        df['total_e_kw'] = df['total_w'].multiply(.5)
+        df = df.copy()[['COORDINATES', 'total_w', 'community_name', 'COORDINATES_shifted', 'total_e_kw']]
+        dfs_truncated_index = [i[:6] for i in dfs.index]
+        dfs_truncated_index = dfs_truncated_index[1:]+[dfs_truncated_index[0]]  
+        #dfs.index = dfs.index.str.replace('Greater ', '')
+        split_names = [s.split(' ')[0] for s in dfs.index]
+        
+        match_comm_names = lambda df, col: [df[df.community_name.str.contains(i)].loc[:,col].values[0] for i in split_names]
+        dfs['COORDINATES'] = match_comm_names(df, 'COORDINATES')
+        dfs['COORDINATES_shifted'] = dfs['COORDINATES']
+        #dfs['COORDINATES_shifted'] = [i for i in dfs['COORDINATES_shifted']]
+        dfs['COORDINATES_shifted'] = [[(i[0] - 0.3), i[1]] for i in dfs['COORDINATES_shifted']]
+        dfs['total_w'] =dfs['total_w'].divide(1e6)
+        dfs['ldc_wint_peak'] =dfs['ldc_wint_peak'].divide(1e6)
+        dfs.index = dfs.index.map(ws_to_cityName_map)
+        
+        dfs['community_name'] =dfs.index
+        
+        #dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
+        df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        df['formatted_e_w'] = df['total_e_kw'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        
+        dfs['formatted_w'] = dfs['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        dfs['formatted_e_w'] = dfs['ldc_wint_peak'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'].values).strftime('%a %b %d, %I%p')
+        
+        layer = pdk.Layer(
+        "ColumnLayer",
+        data=dfs,
+        pickable=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='total_w',
+        radius=1.2e4,
+        #get_fill_color=["total_w ", "total_w * 25", "total_w ", 100],
+        get_fill_color=[50, 0, 0, 50],
+        elevation_scale=120,
+        get_position="COORDINATES",
+        auto_highlight=True
+        )
+        
+        layer2 = pdk.Layer(
+        "ColumnLayer",
+        data=dfs,
+        pickable=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='ldc_wint_peak',
+        radius=1.2e4,
+        #get_fill_color=["total_w * 25 ", "total_w", "total_w * 25 ", 200],
+        get_fill_color=[0, 50, 0, 50],
+        elevation_scale=120,
+        get_position="COORDINATES_shifted",
+        auto_highlight=True
+        )
+        lat = 43.4516 # kitchener on
+        lon = -80.4925
+        #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
+        view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=45)
+        tooltip_css = '''
+    <div class="wrapper">
+      <p>Mobile tooltip</p>
+      <div class="tooltip-right tooltip-mobile" data-tooltip="This tooltip is centered on a mobile screen.">
+            <i class="fas fa-question-circle" focusable="false" aria-hidden="true"></i>
+        </div>
+        </div>
+        '''
+        tooltip = {
+                "html": "<div class='wrapper'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
+        "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
+        }
+        # Render
+        ldc_heating_map = pdk.Deck(
+        layers=[layer, layer2],
+        map_style='road',
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        )
+        st.pydeck_chart(ldc_heating_map )
+
+        with st.expander('View the heat data for the map'):
+            heat_blurb = '''
+    As of 
+            '''
+            heat_blurb = heat_blurb+dt
+            st.markdown(heat_blurb)
+            st.dataframe(dfs_orig.style.format(thousands=',', precision=2, subset=numeric_cols))
+    else:
+    # --- ONTARIO "HEAT" MAP -- 
+        df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
+
+        df= df.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
+
+        #df = df.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
+        df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
+        df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
+        df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
+        df['Latitude'] = np.where(df.community_name=='Kenora', 49.766666, df.Latitude)
+
+        z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
+        df['COORDINATES'] = z
+        df['total_w'] = df['total_w'].divide(1e6)
+        df = df.dropna()
+
+        print(df['condition'])
+        df = df.copy()[['COORDINATES', 'datehour_my', 'total_w', 'community_name']]
+
+               
+        df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+
+        layer = pdk.Layer(
+        "ColumnLayer",
+        data=df,
+        pickable=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='total_w',
+        radius=1.2e4,
+        #get_fill_color=["total_w * 25", "total_w", "total_w * 25", 220],
+        get_fill_color=[50, 0, 0, 50],
+        elevation_scale=500,
+        get_position="COORDINATES",
+        auto_highlight=True
+        )
+
+        lat = 46.3862 # Elliott Lake ON
+        lon = -82.6509
+       
+        view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.255, bearing=0, pitch=45)
+        tooltip = {
+        "html": "<b>{community_name}:<br> {formatted_w}</b> MW heat demand</b>",
+        "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
+        }
+        # Render
+        r = pdk.Deck(
+        layers=[layer],
+        map_style='road',
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        )
+
+        st.pydeck_chart(r)
+        with st.expander('view the data for the map'):
+            st.dataframe(df)
     heating_map_blurb = '''
     ***Most of what we think we know about energy usage is either wrong or drastically underestimated***. On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
@@ -207,11 +276,11 @@ As of
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners.
     '''
     st.markdown(heating_map_blurb)
-    # --- END OF ONTARIO LDC HEAT DEMAND MAP
-
+        # --- END OF ONTARIO LDC HEAT DEMAND MAP
+    
 ## --- WHAT I DO ---
 with st.container():
-    st.write('---')
+    V_SPACE(1)
     left_column, right_column = st.columns(2)
     with left_column:
         st.markdown('### And that doesn&#8217;t even include transportation energy!')
@@ -230,33 +299,14 @@ That power demand varies greatly through the day, but the average Ontario hourly
         '''
         st.markdown(electrical_demand_blurb)
 
-#
-## --- PROJECTS ---
-#with st.container():
-    #st.write('---')
-    #st.header('My projects')
-    #st.write('##')
-    #image_column, text_column = st.columns((1, 2))
-    #with image_column:
-        #st.write('waste waffle was here')
-        ##st.image(waste_waffle)
-    #with text_column:
-        #st.markdown('### Industrial electrification')
-        #st.markdown('***Canada&#8217;s industrial decarbonization*** presents opportunities for disruptive world leading economic transformation, with unprecedented greenhouse gas (GHG) emissions reductions. By far the main source of energy use and GHGs in Canada is from heat production, for large scale liquid-fuel feedstock manufacturing. This chiefly occurs in Alberta\'s oilsands, and the main energy usage, and GHG emissions source, is burning natural gas to provide heat and chemicals for the main stages of oilsands processing. These consist of separating bitumen from sand and manufacturing hydrogen.')
-        #st.markdown('### Transport electrification')
-        #st.markdown('***Gasoline powered personal motor transport*** is among the largest energy use categories of greenhouse gas (GHG) emissions in Canada. Decarbonizing this activity requires electrifying it. At the current usage level, this would require upward of 12,000 megawatts of new non-emitting electricity generating capacity across the country. This has the potential to eliminate some 85 million tons of GHGs annually from Canada&rdquo;s national inventory. Electrifying all road and rail transport could eliminate a further 60 million tons.')
-        #st.markdown('### Urban &ldquo;off-grid&rdquo; electrification')
-        #st.markdown('***Urban electrification is proceeding*** in Canadian cities and towns, mostly at the smaller scale. Many ``off-grid'' applications currently dominated by two-stroke gasoline engines are seeing electric competitors in greater use. Chainsaws, augers, mowers, and other powered gardening equipment are examples. Electric bicycles and scooters, skateboards, and unicycles, are becoming ubiquitous.')
-#
-        #st.markdown('[Watch video...](https://www.youtube.com/watch?v=VqgUkExPvLY)')
 
 # --- CONTACT FORM ---
 with st.container():
     
     # Execute your app
-    st.write('---')
+    V_SPACE(1)
     st.header('Contact me')
-    st.write('###')
+    V_SPACE(1)
     contact_form = """
     <form action="https://formsubmit.co/steve@emissiontrak.com" method="POST">
      <input type="hidden" name="_captcha" value='false'>
