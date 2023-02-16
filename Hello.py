@@ -238,7 +238,7 @@ with st.container():
         x = sums.sort_values(ascending=False)
         y = sums.sort_values(ascending=False).index
         p = figure(
-        height=100,
+        height=175,
         title= 'Total heat demand, MW '+dt,
         y_range=y.values,
         x_axis_label='MW',
@@ -334,7 +334,7 @@ with st.container():
         y = df_totals.sort_values(ascending=False).index
         print('df: ', x, y.values)
         p_totals = figure(
-        height=100,
+        height=175,
         title= 'Total heat demand compared with selected capacities, MW ',
         y_range=y.values,
         x_axis_label='MW',
