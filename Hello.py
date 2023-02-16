@@ -70,12 +70,12 @@ local_css(path+'/style/style.css')
 #--- HEADER SECTION ---
 with st.container():
     st.subheader('Welcome to emissionTrak&#8482; :wave:')
-    st.markdown('## Hard nosed data-driven strategic counsel for clients navigating the treacherous energy & environment space')
+    st.markdown('## Hard nosed data-driven strategic counsel for clients navigating the treacherous, abundant energy & environment space')
     st.write('[My blog, where I comment on current energy affairs >>](http://canadianenergyissues.com)')
     st.markdown('#### How treacherous? Here&#8217;s a small example of the realities of energy demand')
     # --- ONTARIO LDC AND HEAT DEMAND MAP --
 
-    ldc_or_heat_list = ['Heat demand and selected LDC winter peak demand', 'Heat demand only']
+    ldc_or_heat_list = ['Heat demand with selected\nLDC winter peak electrical demand', 'Heat demand only']
     ldc_or_heat = st.radio('Choose dataset', ldc_or_heat_list, index=0,  horizontal=True)
     st.markdown('##### Ontario residential space heating demand')
     space_heating = '''
@@ -85,179 +85,181 @@ with st.container():
     col1, col2 = st.columns(2)
 
     if ldc_or_heat==ldc_or_heat_list[0]:
-        with col1:
-            pd.set_option('display.float_format', lambda x: '{:,.0f}'.format(x))
-            ldcs = pd.read_csv(path+"/data/ldcs_service_area_peak_kw.csv", header=0).set_index('Company_Name')
-            ldcs = ldcs.astype(float)
-            ldc_data_categories = ['Year', 'Winter_Peak_Load_With_Embedded_Generation_kW',
-            'Summer_Peak_Load_With_Embedded_Generation_kW',
-            'Average_Peak_Load_With_Embedded_Generation_kW',
-            'Average_Load_Factor_With_Embedded_Generation_Percentage',
-            'Winter_Peak_Load_Without_Embedded_Generation_kW',
-            'Summer_Peak_Load_Without_Embedded_Generation_kW',
-            'Average_Peak_Load_Without_Embedded_Generation_kW',
-            'Average_Load_Factor_Without_Embedded_Generation_Percentage']
-            ldcs = ldcs[ldc_data_categories]
-            ldcs['Year'] = ldcs['Year'].astype(int)
-            gr = ldcs.groupby(ldcs.index).max()
-            
-            ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
-            ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Winter_Peak_Load_Without_Embedded_Generation_kW']
-            
-            dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
-            dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
-            dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
-            cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
-               'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
-               'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
-               'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
-               'total_w', 'total_w_per_dwelling']
-            dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
+        pd.set_option('display.float_format', lambda x: '{:,.0f}'.format(x))
+        ldcs = pd.read_csv(path+"/data/ldcs_service_area_peak_kw.csv", header=0).set_index('Company_Name')
+        ldcs = ldcs.astype(float)
+        ldc_data_categories = ['Year', 'Winter_Peak_Load_With_Embedded_Generation_kW',
+        'Summer_Peak_Load_With_Embedded_Generation_kW',
+        'Average_Peak_Load_With_Embedded_Generation_kW',
+        'Average_Load_Factor_With_Embedded_Generation_Percentage',
+        'Winter_Peak_Load_Without_Embedded_Generation_kW',
+        'Summer_Peak_Load_Without_Embedded_Generation_kW',
+        'Average_Peak_Load_Without_Embedded_Generation_kW',
+        'Average_Load_Factor_Without_Embedded_Generation_Percentage']
+        ldcs = ldcs[ldc_data_categories]
+        ldcs['Year'] = ldcs['Year'].astype(int)
+        gr = ldcs.groupby(ldcs.index).max()
+        
+        ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
+        ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Winter_Peak_Load_Without_Embedded_Generation_kW']
+        
+        dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+        dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+        dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
+        cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
+           'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
+           'windspeed', 'gust', 'direction', 'bearing', 'realTemp', 'temp_delta',
+           'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w',
+           'total_w', 'total_w_per_dwelling']
+        dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
 
-            dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
-            dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
-            
-            # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
-            ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
-            'Ottawa Macdonald-Cartier Int\'l Airport',
-            'Toronto Pearson Int\'l Airport', 'Sault Ste. Marie Airport',
-            'Kingston Airport', 'Windsor Airport', 'Greater Sudbury Airport']
-            city_names = ['London', 'Thunder Bay', 'Ottawa', 'Toronto', 'Sault Ste. Marie', 'Kingston', 'Windsor', 'Sudbury']
-            ws_to_cityName_map = {e[0]:e[1] for e in zip(ws_names, city_names)}
-            ldc_for_map = ['London', 'Synergy', 'Hydro Ottawa', 'Toronto', 'Algoma', 'Kingston', 'ENWIN', 'Sudbury']
-            ldc_mapper = {e[0]:e[1] for e in zip(ws_names, ldc_for_map)}
-            
-            ldc_cols = ['Algoma Power Inc.', 'ENWIN Utilities Ltd.', 'Hydro Ottawa Limited',
-            'Kingston Hydro Corporation', 'London Hydro Inc.',
-            'Synergy North Corporation', 'Greater Sudbury Hydro Inc.', 'Toronto Hydro-Electric System Limited']
-            
-            dfs['ldc_abb'] = dfs.index.map(ldc_mapper)
-            match_kw_with_ldc = lambda df, s: np.array([df[df.index.str.contains(i)].iloc[:,1].values[0] for i in s])*1e3 # pd numerical indexer (iloc) picks element from ldc_data_categories
-            
-            dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
-            dfs = dfs.drop(columns=['ceiling_w', 'dwellings'])
-            
-            df = pd.read_csv(path+'/data/ontario_heat_demand.csv', header=0)
-            df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
-            df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
-            df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
-            df['Latitude'] = np.where(df.community_name=='Kenora', 49.766666, df.Latitude)
-            london_dict = {'community_name':'London', 'Longitude': -81.249725, 'Latitude':42.983612, 'total_w':np.nan}
-            ld = pd.DataFrame.from_dict(london_dict, orient='index')
-            df = pd.concat([df, ld.T])
-            df.index = np.arange(0, df.shape[0])
-            
-            z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
-            z1 = [list(t) for t in zip((df.Longitude.values)+0.1, df.Latitude.values)]
-            df['COORDINATES'] = z
-            df['COORDINATES_shifted'] = z1
-            df['total_w'] = df['total_w'].divide(1e6)
-            df['total_e_kw'] = df['total_w'].multiply(.5)
-            df = df.copy()[['COORDINATES', 'total_w', 'community_name', 'COORDINATES_shifted', 'total_e_kw']]
-            dfs_truncated_index = [i[:6] for i in dfs.index]
-            dfs_truncated_index = dfs_truncated_index[1:]+[dfs_truncated_index[0]]  
-            #dfs.index = dfs.index.str.replace('Greater ', '')
-            split_names = [s.split(' ')[0] for s in dfs.index]
-            
-            match_comm_names = lambda df, col: [df[df.community_name.str.contains(i)].loc[:,col].values[0] for i in split_names]
-            dfs['COORDINATES'] = match_comm_names(df, 'COORDINATES')
-            dfs['COORDINATES_shifted'] = dfs['COORDINATES']
-            #dfs['COORDINATES_shifted'] = [i for i in dfs['COORDINATES_shifted']]
-            dfs['COORDINATES_shifted'] = [[(i[0] - 0.3), i[1]] for i in dfs['COORDINATES_shifted']]
-            dfs['total_w'] =dfs['total_w'].divide(1e6)
-            dfs['ldc_wint_peak'] =dfs['ldc_wint_peak'].divide(1e6)
-            dfs.index = dfs.index.map(ws_to_cityName_map)
-            
-            dfs['community_name'] =dfs.index
-            
-            #dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
-            df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-            df['formatted_e_w'] = df['total_e_kw'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-            
-            dfs['formatted_w'] = dfs['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-            dfs['formatted_e_w'] = dfs['ldc_wint_peak'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-            dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'].values).strftime('%a %b %d, %I%p')
+        dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
+        dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
+        
+        # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
+        ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
+        'Ottawa Macdonald-Cartier Int\'l Airport',
+        'Toronto Pearson Int\'l Airport', 'Sault Ste. Marie Airport',
+        'Kingston Airport', 'Windsor Airport', 'Greater Sudbury Airport']
+        city_names = ['London', 'Thunder Bay', 'Ottawa', 'Toronto', 'Sault Ste. Marie', 'Kingston', 'Windsor', 'Sudbury']
+        ws_to_cityName_map = {e[0]:e[1] for e in zip(ws_names, city_names)}
+        ldc_for_map = ['London', 'Synergy', 'Hydro Ottawa', 'Toronto', 'Algoma', 'Kingston', 'ENWIN', 'Sudbury']
+        ldc_mapper = {e[0]:e[1] for e in zip(ws_names, ldc_for_map)}
+        
+        ldc_cols = ['Algoma Power Inc.', 'ENWIN Utilities Ltd.', 'Hydro Ottawa Limited',
+        'Kingston Hydro Corporation', 'London Hydro Inc.',
+        'Synergy North Corporation', 'Greater Sudbury Hydro Inc.', 'Toronto Hydro-Electric System Limited']
+        
+        dfs['ldc_abb'] = dfs.index.map(ldc_mapper)
+        match_kw_with_ldc = lambda df, s: np.array([df[df.index.str.contains(i)].iloc[:,1].values[0] for i in s])*1e3 # pd numerical indexer (iloc) picks element from ldc_data_categories
+        
+        dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
+        dfs = dfs.drop(columns=['ceiling_w', 'dwellings'])
+        
+        df = pd.read_csv(path+'/data/ontario_heat_demand.csv', header=0)
+        df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
+        df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
+        df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
+        df['Latitude'] = np.where(df.community_name=='Kenora', 49.766666, df.Latitude)
+        london_dict = {'community_name':'London', 'Longitude': -81.249725, 'Latitude':42.983612, 'total_w':np.nan}
+        ld = pd.DataFrame.from_dict(london_dict, orient='index')
+        df = pd.concat([df, ld.T])
+        df.index = np.arange(0, df.shape[0])
+        
+        z = [list(t) for t in zip(df.Longitude.values, df.Latitude.values)]
+        z1 = [list(t) for t in zip((df.Longitude.values)+0.1, df.Latitude.values)]
+        df['COORDINATES'] = z
+        df['COORDINATES_shifted'] = z1
+        df['total_w'] = df['total_w'].divide(1e6)
+        df['total_e_kw'] = df['total_w'].multiply(.5)
+        df = df.copy()[['COORDINATES', 'total_w', 'community_name', 'COORDINATES_shifted', 'total_e_kw']]
+        dfs_truncated_index = [i[:6] for i in dfs.index]
+        dfs_truncated_index = dfs_truncated_index[1:]+[dfs_truncated_index[0]]  
+        #dfs.index = dfs.index.str.replace('Greater ', '')
+        split_names = [s.split(' ')[0] for s in dfs.index]
+        
+        match_comm_names = lambda df, col: [df[df.community_name.str.contains(i)].loc[:,col].values[0] for i in split_names]
+        dfs['COORDINATES'] = match_comm_names(df, 'COORDINATES')
+        dfs['COORDINATES_shifted'] = dfs['COORDINATES']
+        #dfs['COORDINATES_shifted'] = [i for i in dfs['COORDINATES_shifted']]
+        dfs['COORDINATES_shifted'] = [[(i[0] - 0.3), i[1]] for i in dfs['COORDINATES_shifted']]
+        dfs['total_w'] =dfs['total_w'].divide(1e6)
+        dfs['ldc_wint_peak'] =dfs['ldc_wint_peak'].divide(1e6)
+        dfs.index = dfs.index.map(ws_to_cityName_map)
+        
+        dfs['community_name'] =dfs.index
+        
+        #dfs['ldc_wint_peak'] = match_kw_with_ldc(ldc_subset, dfs.ldc_abb)
+        df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        df['formatted_e_w'] = df['total_e_kw'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        
+        dfs['formatted_w'] = dfs['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        dfs['formatted_e_w'] = dfs['ldc_wint_peak'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'].values).strftime('%a %b %d, %I%p')
 
-            sums = dfs[['total_w', 'ldc_wint_peak']]
-            sums = sums.sum()
-            sums.index = sums.index.map({'total_w':'Total Heat Demand', 'ldc_wint_peak':'Total LDC 2021 Winter Peak Demand'})
-            print(sums)
-            
-            layer = pdk.Layer(
-            "ColumnLayer",
-            data=dfs,
-            pickable=True,
-            extruded=True,
-            wireframe=True,
-            get_elevation='total_w',
-            radius=1.2e4,
-            #get_fill_color=["total_w ", "total_w * 25", "total_w ", 100],
-            get_fill_color=[50, 0, 0, 50],
-            elevation_scale=120,
-            get_position="COORDINATES",
-            auto_highlight=True
-            )
-            
-            layer2 = pdk.Layer(
-            "ColumnLayer",
-            data=dfs,
-            pickable=True,
-            extruded=True,
-            wireframe=True,
-            get_elevation='ldc_wint_peak',
-            radius=1.2e4,
-            #get_fill_color=["total_w * 25 ", "total_w", "total_w * 25 ", 200],
-            get_fill_color=[0, 50, 0, 50],
-            elevation_scale=120,
-            get_position="COORDINATES_shifted",
-            auto_highlight=True
-            )
-            lat = 43.4516 # kitchener on
-            lon = -80.4925
-            #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
-            view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=50)
-            tooltip = {
-                    "html": "<style> "+tooltip_css+" </style> <div class='tooldip'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
-            "style": {"background": "lightgrey", "color": "black", "font-family": '"Helvetica Neue", Arial', "z-index": "10000", "display": "inline",
-  "position":"relative",
-  "display":"block",
-  "top": "-25%",
-  "left": "5%",
-  "width":"50%",
-  "margin-left":"-25%",
-  "text-align": "left"},
-            }
-            # Render
-            ldc_heating_map = pdk.Deck(
-            layers=[layer, layer2],
-            map_style='road',
-            initial_view_state=view_state,
-            tooltip=tooltip,
-            )
-            st.pydeck_chart(ldc_heating_map )
-        with col2:
-            x = sums.sort_values(ascending=False)
-            y = sums.sort_values(ascending=False).index
-            p = figure(
-            height=200,
-            title= 'Total heat demand, MW '+dt,
-            y_range=y.values,
-            x_axis_label='MW',
-            y_axis_label='')
-            color = 'steelblue'
-            p.hbar(right=x, y=y, height=0.5, color=color)
-            st.bokeh_chart(p)
+        sums = dfs[['total_w', 'ldc_wint_peak']]
+        sums = sums.sum()
+        sums.index = sums.index.map({'total_w':'Total residential space\nheating demand', 'ldc_wint_peak':'Total LDC 2021 winter\npeak demand'})
+        print(sums)
+        
+        layer = pdk.Layer(
+        "ColumnLayer",
+        data=dfs,
+        pickable=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='total_w',
+        radius=1.2e4,
+        #get_fill_color=["total_w ", "total_w * 25", "total_w ", 100],
+        get_fill_color=[50, 0, 0, 50],
+        elevation_scale=120,
+        get_position="COORDINATES",
+        auto_highlight=True
+        )
+        
+        layer2 = pdk.Layer(
+        "ColumnLayer",
+        data=dfs,
+        pickable=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='ldc_wint_peak',
+        radius=1.2e4,
+        #get_fill_color=["total_w * 25 ", "total_w", "total_w * 25 ", 200],
+        get_fill_color=[0, 50, 0, 50],
+        elevation_scale=120,
+        get_position="COORDINATES_shifted",
+        auto_highlight=True
+        )
+        lat = 43.4516 # kitchener on
+        lon = -80.4925
+        #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
+        view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=50)
+        tooltip = {
+                "html": "<style> "+tooltip_css+" </style> <div class='tooldip'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
+        "style": {"background": "lightgrey", "color": "black", "font-family": '"Helvetica Neue", Arial', "z-index": "10000", "display": "inline",
+"position":"relative",
+"display":"block",
+"top": "-25%",
+"left": "5%",
+"width":"50%",
+"margin-left":"-25%",
+"text-align": "left"},
+        }
+        # Render
+        ldc_heating_map = pdk.Deck(
+        layers=[layer, layer2],
+        map_style='road',
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        )
+        st.pydeck_chart(ldc_heating_map )
+
+        x = sums.sort_values(ascending=False)
+        y = sums.sort_values(ascending=False).index
+        p = figure(
+        height=100,
+        title= 'Total heat demand, MW '+dt,
+        y_range=y.values,
+        x_axis_label='MW',
+        y_axis_label='',
+        toolbar_location=None)
+        color = 'steelblue'
+        p.hbar(right=x, y=y, height=0.5, color=color)
+
+        p.sizing_mode = 'scale_width'
+        st.bokeh_chart(p)
 
 
         with st.expander('View the heat data for the map'):
             heat_blurb = '''
-    As of 
+            As of 
             '''
             heat_blurb = heat_blurb+dt
             st.markdown(heat_blurb)
             st.dataframe(dfs_orig.style.format(thousands=',', precision=2, subset=numeric_cols))
     else:
-    # --- ONTARIO "HEAT" MAP -- 
+# --- ONTARIO "HEAT" MAP -- 
         df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
 
 
@@ -277,6 +279,12 @@ with st.container():
 
                
         df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
+        df_sums = df['total_w'].sum()
+        df_sums_dict = {'Bruce Nuclear Station Capacity':6000, 'Total Heat Demand Shown on the Map':df_sums,
+            'Adam Beck 2 Hydro Generator':1630, 'TC Energy Pumped Storage Hydro':1000, 'Oneida Battery':250}
+        df_totals = pd.DataFrame.from_dict(df_sums_dict, orient='index')
+
+        df_totals = pd.Series(df_sums_dict)
 
         layer = pdk.Layer(
         "ColumnLayer",
@@ -304,13 +312,13 @@ with st.container():
         tooltip = {
                     "html": "<style> "+tooltip_css+" </style> <div class='tooldip'><b>{community_name}:<br> {formatted_w} MW</b> residential space heat demand </b></div>",
             "style": {"background": "lightgrey", "color": "black", "font-family": '"Helvetica Neue", Arial', "z-index": "10000", "display": "inline",
-  "position":"relative",
-  "display":"block",
-  "top": "-25%",
-  "left": "5%",
-  "width":"50%",
-  "margin-left":"-25%",
-  "text-align": "left"},
+    "position":"relative",
+    "display":"block",
+    "top": "-25%",
+    "left": "5%",
+    "width":"50%",
+    "margin-left":"-25%",
+    "text-align": "left"},
             }
 
         # Render
@@ -322,10 +330,25 @@ with st.container():
         )
 
         st.pydeck_chart(r)
+        x = df_totals.sort_values(ascending=False)
+        y = df_totals.sort_values(ascending=False).index
+        print('df: ', x, y.values)
+        p_totals = figure(
+        height=100,
+        title= 'Total heat demand compared with selected capacities, MW ',
+        y_range=y.values,
+        x_axis_label='MW',
+        y_axis_label='',
+        toolbar_location=None)
+        color = '#BA3655'
+        p_totals.hbar(right=x, y=y, height=0.5, color=color)
+        p_totals.sizing_mode = 'scale_width'
+        st.bokeh_chart(p_totals)
+
         with st.expander('view the data for the map'):
             st.dataframe(df)
     heating_map_blurb = '''
-    > ***Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can maintain an adequate energy supply without fossil fuel. It is possible, but magic is not going to play a role.***.
+    > Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can have energy without fossil fuel. This ***is*** possible, but not with magic..
 
     On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
