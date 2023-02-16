@@ -179,7 +179,7 @@ with st.container():
 
         sums = dfs[['total_w', 'ldc_wint_peak']]
         sums = sums.sum()
-        sums.index = sums.index.map({'total_w':'Total residential space\nheating demand', 'ldc_wint_peak':'Total LDC 2021 winter\npeak demand'})
+        sums.index = sums.index.map({'total_w':'Total right column demand MW', 'ldc_wint_peak':'Total left column demand MW'})
         print(sums)
         
         layer = pdk.Layer(
