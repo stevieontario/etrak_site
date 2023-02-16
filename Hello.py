@@ -40,6 +40,27 @@ image_contact_form = Image.open(path+'/images/contact.png')
 #waste_waffle = Image.open('/var/www/html/Documents/tw/waste_waffle.png-1.png')
 #st.experimental_rerun()
 
+tooltip_css = '''
+.tooltip {
+  display: inline;
+  position: relative;
+  color=blue
+}
+.tooltip:hover:after {
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    color: black
+}
+
+.tooltip:hover:before {
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    color: black
+}            '''
+
+
 numeric_cols = ['bearing', 'dewpoint', 'pressure', 'humidity', 'windspeed', 'temp', 'visibility', 'windchill', 'gust', 'realTemp', 'temp_delta', 'dwellings', 'ceiling_w', 'window_w', 'noWindowWall_w', 'floor_w', 'floor_w', 'total_w', 'total_w_per_dwelling']
 # --- USE LOCAL CSS ---
 def local_css(file_name):
@@ -50,7 +71,7 @@ local_css(path+'/style/style.css')
 with st.container():
     st.subheader('Welcome to emissionTrak&#8482; :wave:')
     st.markdown('## Hard nosed data-driven strategic counsel for clients navigating the treacherous energy & environment space')
-    st.write('[Learn more >](http://canadianenergyissues.com)')
+    st.write('[My blog, where I comment on current energy affairs >>](http://canadianenergyissues.com)')
     st.markdown('#### How treacherous? Here&#8217;s a small example of the realities of energy demand')
     # --- ONTARIO LDC AND HEAT DEMAND MAP --
 
@@ -194,18 +215,17 @@ with st.container():
             lat = 43.4516 # kitchener on
             lon = -80.4925
             #view_state = pdk.ViewState(latitude=37.7749295, longitude=-122.4194155, zoom=11, bearing=0, pitch=45)
-            view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=45)
-            tooltip_css = '''
-        <div class="wrapper">
-          <p>Mobile tooltip</p>
-          <div class="tooltip-right tooltip-mobile" data-tooltip="This tooltip is centered on a mobile screen.">
-                <i class="fas fa-question-circle" focusable="false" aria-hidden="true"></i>
-            </div>
-            </div>
-            '''
+            view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.75, bearing=0, pitch=50)
             tooltip = {
-                    "html": "<div class='wrapper'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
-            "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
+                    "html": "<style> "+tooltip_css+" </style> <div class='tooldip'><b>{community_name}, {datehour_formatted}:<br> {formatted_w} MW</b> residential space heat demand (right column)</b><br><b>{formatted_e_w} MW</b> winter peak electrical demand 2021 (left column)</div>",
+            "style": {"background": "lightgrey", "color": "black", "font-family": '"Helvetica Neue", Arial', "z-index": "10000", "display": "inline",
+  "position":"relative",
+  "display":"block",
+  "top": "-25%",
+  "left": "5%",
+  "width":"50%",
+  "margin-left":"-25%",
+  "text-align": "left"},
             }
             # Render
             ldc_heating_map = pdk.Deck(
@@ -276,11 +296,23 @@ with st.container():
         lat = 46.3862 # Elliott Lake ON
         lon = -82.6509
        
-        view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.255, bearing=0, pitch=45)
+        view_state = pdk.ViewState(latitude=lat, longitude=lon, zoom=4.255, bearing=0, pitch=50)
         tooltip = {
         "html": "<b>{community_name}:<br> {formatted_w}</b> MW heat demand</b>",
         "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
         }
+        tooltip = {
+                    "html": "<style> "+tooltip_css+" </style> <div class='tooldip'><b>{community_name}:<br> {formatted_w} MW</b> residential space heat demand </b></div>",
+            "style": {"background": "lightgrey", "color": "black", "font-family": '"Helvetica Neue", Arial', "z-index": "10000", "display": "inline",
+  "position":"relative",
+  "display":"block",
+  "top": "-25%",
+  "left": "5%",
+  "width":"50%",
+  "margin-left":"-25%",
+  "text-align": "left"},
+            }
+
         # Render
         r = pdk.Deck(
         layers=[layer],
@@ -299,9 +331,11 @@ with st.container():
 
     What does this mean? If space heating were electrified, each community&#8217;s reported winter peak electrical demand (left column) would increase by at least the amount in the right column.
     
-    If and when we electrify space heating, the heating demands these communities experience will be met with electricity from the grid. The local distribution companies (LDCs) will be responsible for ensuring their customers are supplied with electrical watts on demand for not just everything those customers use electricity for today, but heating as well. This will have profound impacts on those LDCs&#8217; capital and workforce expenditures.
+    So it means major increases in the amount of electricity generated, transmitted, and distributed through the system. If and when we electrify space heating, the heating demands these communities experience will be met with electricity from the grid. 
 
-    On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners.
+    The local distribution companies (LDCs) will be responsible for ensuring their customers are supplied with electrical watts on demand for not just everything those customers use electricity for today, but heating as well&mdash;and transportation too. Those gas stations you see scattered through cities and towns? The kilowatt-hours they sell today will be electric ones tomorrow. A 50-litre fillup puts 470 kWh into your tank. In an electric vehicle that would be around 150 kWh, and it&#8217;ll go into a battery pack, through a wire fed by an LDC. This will have profound impacts on those LDCs&#8217; capital and workforce expenditures.
+
+    On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
