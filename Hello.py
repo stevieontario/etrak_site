@@ -12,7 +12,7 @@ from bokeh.sampledata.autompg import autompg_clean as dfb
 from bokeh.models import ColumnDataSource
 from bokeh.palettes import GnBu3, OrRd3
 from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div
+from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
 
 
 def style_num(x):
@@ -76,13 +76,19 @@ with st.container():
     # --- ONTARIO LDC AND HEAT DEMAND MAP --
 
     ldc_or_heat_list = ['Heat demand with selected\nLDC winter peak electrical demand', 'Heat demand only']
-    ldc_or_heat = st.radio('Choose dataset', ldc_or_heat_list, index=0,  horizontal=True)
-    st.markdown('##### Ontario residential space heating demand')
-    space_heating = '''
-    On cold days, the demand for space heating in Ontario communities outstrips that for electricity.
-        '''
-    st.markdown(space_heating)
-    col1, col2 = st.columns(2)
+    ldc_or_heat = st.radio('Ontario residential space heating: choose dataset', ldc_or_heat_list, index=0,  horizontal=True)
+    st.markdown(
+    """<style>
+    div[class*="stRadio"] > label > div[data-testid="stMarkdownContainer"] > p {
+    font-size: 24px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    #st.markdown('##### Ontario residential space heating demand')
+    #space_heating = '''
+    ##On cold days, the demand for space heating in Ontario communities outstrips that for electricity.
+        #'''
+    #st.markdown(space_heating)
 
     if ldc_or_heat==ldc_or_heat_list[0]:
         pd.set_option('display.float_format', lambda x: '{:,.0f}'.format(x))
@@ -243,10 +249,13 @@ with st.container():
         y_range=y.values,
         x_axis_label='MW',
         y_axis_label='',
+        x_axis_type=None,
         toolbar_location=None)
         color = 'steelblue'
         p.hbar(right=x, y=y, height=0.5, color=color)
-
+        ticker = SingleIntervalTicker(interval=2000, num_minor_ticks=5)
+        xaxis = LinearAxis(ticker=ticker)
+        p.add_layout(xaxis, 'below')
         p.sizing_mode = 'scale_width'
         st.bokeh_chart(p)
 
@@ -338,8 +347,13 @@ with st.container():
         title= 'Total heat demand compared with selected capacities, MW ',
         y_range=y.values,
         x_axis_label='MW',
+        x_axis_type=None,
         y_axis_label='',
         toolbar_location=None)
+        ticker = SingleIntervalTicker(interval=2000, num_minor_ticks=5)
+        xaxis = LinearAxis(ticker=ticker)
+        p_totals.add_layout(xaxis, 'below')
+
         color = '#BA3655'
         p_totals.hbar(right=x, y=y, height=0.5, color=color)
         p_totals.sizing_mode = 'scale_width'
