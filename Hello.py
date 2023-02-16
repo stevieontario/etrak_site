@@ -325,7 +325,7 @@ with st.container():
         with st.expander('view the data for the map'):
             st.dataframe(df)
     heating_map_blurb = '''
-    > ***Most of what we think we know about energy usage is either wrong or drastically underestimated***.
+    > ***Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can maintain an adequate energy supply without fossil fuel. It is possible, but magic is not going to play a role.***.
 
     On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
@@ -345,6 +345,14 @@ with st.container():
     V_SPACE(1)
     left_column, right_column = st.columns(2)
     with left_column:
+        st.markdown('### Treacherous because of widespread misconceptions and misinformation about energy and how to supply it')
+        transport_energy_blurb = '''
+        Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. Most people do not describe heat in terms of common energy units. This includes 
+
+        Electrifying transport will have a transformational impact on air quality. Essentially the only pollutants at the user end will be from the friction of rubber tires on asphalt.
+        '''
+        st.markdown(transport_energy_blurb)
+
         st.markdown('### And that doesn&#8217;t even include transportation energy!')
         transport_energy_blurb = '''
         Transport energy&mdash;most of which is the liquid fuels for cars and trucks&mdash;is currently the second-largest energy category of the Big Three. It is also by far the biggest CO$_2$&mdash;and NO$_x$, SO$_x$, and carbon monoxide (CO)&mdash;emitter.
