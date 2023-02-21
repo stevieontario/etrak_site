@@ -365,10 +365,10 @@ with st.container():
         ticker = SingleIntervalTicker(interval=2000, num_minor_ticks=5)
         xaxis = LinearAxis(ticker=ticker)
         p_totals.add_layout(xaxis, 'below')
-        p_totals.xaxis.axis_label_text_font_size = "24pt"
-        p_totals.yaxis.major_label_text_font_size = "16pt"
-        p_totals.xaxis.major_label_text_font_size = "16pt"
-        p_totals.title.text_font_size = "18pt"
+        #p_totals.xaxis.axis_label_text_font_size = "24pt"
+        #p_totals.yaxis.major_label_text_font_size = "16pt"
+        #p_totals.xaxis.major_label_text_font_size = "16pt"
+        #p_totals.title.text_font_size = "18pt"
 
         color = '#BA3655'
         p_totals.hbar(right=x, y=y, height=0.5, color=color)
