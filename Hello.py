@@ -401,8 +401,6 @@ with st.container():
         st.markdown('### Treacherous because of widespread misconceptions and misinformation about energy and how to supply it')
         transport_energy_blurb = '''
         Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. 
-
-        Electrifying transport will have a transformational impact on air quality. Essentially the only pollutants at the user end will be from the friction of rubber tires on asphalt.
         '''
         st.markdown(transport_energy_blurb)
 
