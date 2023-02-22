@@ -378,11 +378,11 @@ with st.container():
         with st.expander('view the data for the map'):
             st.dataframe(df)
     heating_map_blurb = '''
-    > Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can have energy without fossil fuel. This ***is*** possible, but not with magic.
+    > Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can have energy without fossil fuel. It ***is*** possible to have abundant energy without fossil fuel, but magic has nothing to do with it.
 
     On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
-    What does this mean? If space heating were electrified, each community&#8217;s reported winter peak electrical demand (left column) would increase by at least the amount in the right column.
+    What does this mean? If space heating were electrified, each community&#8217;s reported winter peak electrical demand (left column of the LDC map) would increase by at least the amount in the right column on the same map. To understand the ***energy*** demands of each community&#8217;s current electrical demand plus heat demand, stack the columns on top of each other. That would be the new electrical demand.
     
     So it means major increases in the amount of electricity generated, transmitted, and distributed through the system. If and when we electrify space heating, the heating demands these communities experience will be met with electricity from the grid. 
 
