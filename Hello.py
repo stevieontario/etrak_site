@@ -378,7 +378,7 @@ with st.container():
         with st.expander('view the data for the map'):
             st.dataframe(df)
     heating_map_blurb = '''
-    > Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can have energy without fossil fuel. This ***is*** possible, but not with magic..
+    > Most of what we think we know about energy usage is either wrong or drastically underestimated. This leads to magical thinking about how we can have energy without fossil fuel. This ***is*** possible, but not with magic.
 
     On cold days, the map above shows residential space heating demands in some of the largest Ontario communities outstripping those communities&#8217; reported electrical demand winter peaks by upwards of two to one. Hover over each community&#8217;s columns for the details.
 
