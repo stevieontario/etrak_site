@@ -258,7 +258,7 @@ with st.container():
         toolbar_location=None)
         color = 'steelblue'
         p.hbar(right=x, y=y, height=0.5, color=color)
-        ticker = SingleIntervalTicker(interval=2000, num_minor_ticks=5)
+        ticker = SingleIntervalTicker(interval=3000, num_minor_ticks=5)
         xaxis = LinearAxis(ticker=ticker)
         p.add_layout(xaxis, 'below')
         p.sizing_mode = 'scale_width'
@@ -362,7 +362,7 @@ with st.container():
         y_axis_label='',
         #toolbar_location=None
         )
-        ticker = SingleIntervalTicker(interval=2000, num_minor_ticks=5)
+        ticker = SingleIntervalTicker(interval=3000, num_minor_ticks=5)
         xaxis = LinearAxis(ticker=ticker)
         p_totals.add_layout(xaxis, 'below')
         #p_totals.xaxis.axis_label_text_font_size = "24pt"
