@@ -9,7 +9,7 @@ import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, NumeralTickFormatter
 from bokeh.palettes import GnBu3, OrRd3
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
@@ -190,7 +190,7 @@ with st.container():
         sums = sums.sum()
         sums.index = sums.index.map({'total_w':'Total heat demand', 'ldc_wint_peak':'Total LDC winter peaks', 'ldc_avg_peak':'Total LDC average peaks'})
         sums.loc['TC Energy Pumped Storage Hydro'] = 1000
-        sums.loc['Bruce Nuclear Station Capacity'] = 6000
+        sums.loc['Bruce Nuclear Station Capacity'] = 6555
         print(sums)
         
         layer = pdk.Layer(
@@ -258,9 +258,11 @@ with st.container():
         toolbar_location=None)
         color = 'steelblue'
         p.hbar(right=x, y=y, height=0.5, color=color)
-        ticker = SingleIntervalTicker(interval=4000, num_minor_ticks=5)
+        ticker = SingleIntervalTicker(interval=3000, num_minor_ticks=5)
         xaxis = LinearAxis(ticker=ticker)
         p.add_layout(xaxis, 'below')
+
+        p.xaxis.formatter=NumeralTickFormatter(format='0a')
         p.sizing_mode = 'scale_width'
         st.bokeh_chart(p)
 
@@ -297,7 +299,7 @@ with st.container():
         dt = pd.to_datetime(dt).strftime('%a %b %d %I%p')
         print('dt: ', dt)
         df_sums = df['total_w'].sum()
-        df_sums_dict = {'Bruce Nuclear Station Capacity':6000, 'Total Ontario Residential Heat Demand':df_sums,
+        df_sums_dict = {'Bruce Nuclear Station Capacity':6555, 'Total Ontario Residential Heat Demand':df_sums,
             'Adam Beck 2 Hydro Generator':1630, 'TC Energy Pumped Storage Hydro':1000, 'Oneida Battery':250}
         df_totals = pd.DataFrame.from_dict(df_sums_dict, orient='index')
 
@@ -362,7 +364,7 @@ with st.container():
         y_axis_label='',
         #toolbar_location=None
         )
-        ticker = SingleIntervalTicker(interval=4000, num_minor_ticks=5)
+        ticker = SingleIntervalTicker(interval=3000, num_minor_ticks=5)
         xaxis = LinearAxis(ticker=ticker)
         p_totals.add_layout(xaxis, 'below')
         #p_totals.xaxis.axis_label_text_font_size = "24pt"
@@ -372,6 +374,7 @@ with st.container():
 
         color = '#BA3655'
         p_totals.hbar(right=x, y=y, height=0.5, color=color)
+        p_totals.xaxis.formatter=NumeralTickFormatter(format='0a')
         p_totals.sizing_mode = 'scale_width'
         st.bokeh_chart(p_totals)
 
