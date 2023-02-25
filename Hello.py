@@ -299,7 +299,7 @@ with st.container():
         dt = pd.to_datetime(dt).strftime('%a %b %d %I%p')
         print('dt: ', dt)
         df_sums = df['total_w'].sum()
-        df_sums_dict = {'Bruce Nuclear Station Capacity':6555, 'Total Ontario Residential Heat Demand':df_sums,
+        df_sums_dict = {'Bruce Nuclear Station Capacity':6555, 'Total ON Res. Heat Demand':df_sums,
             'Adam Beck 2 Hydro Generator':1630, 'TC Energy Pumped Storage Hydro':1000, 'Oneida Battery':250}
         df_totals = pd.DataFrame.from_dict(df_sums_dict, orient='index')
 
