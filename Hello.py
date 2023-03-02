@@ -404,7 +404,7 @@ with st.container():
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
-    gen = pd.read_csv('/home/steveaplin/Documents/eda/ieso_genoutputcap_v6.csv')# note version!
+    gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
     gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
     gen.index.name = 'datehour'
 
