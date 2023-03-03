@@ -536,7 +536,6 @@ with st.container():
         st.bokeh_chart(layout)
         
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
-    st.markdown('hey ali baba (hey ali baba), yore camel loves you (yore camel loves you?) And everythink like that, or somethink like that') 
 ## --- WHAT I DO ---
 with st.container():
     V_SPACE(1)
