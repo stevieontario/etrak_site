@@ -404,139 +404,138 @@ with st.container():
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
-    gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
-    gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
-    gen.index.name = 'datehour'
-
-    capacities = gen.groupby('unit').max().capacity.to_dict()
-    gen['capacity'] = gen['unit'].map(capacities)
-    gen['capfactor'] = gen['output'].divide(gen['capacity'])
-    grFuel = gen.groupby([gen.index, 'fuel']).sum()
-    grFuel['capfactor'] = grFuel['output'].divide(grFuel['capacity'])
-
-    wind_solar_mask = ['wind', 'solar']
-    wind_solar_mask = gen.fuel.str.contains('|'.join(wind_solar_mask), case=False)
-    gen_ws = gen[wind_solar_mask]
-    gen_nws = gen[~wind_solar_mask] # nws = no wind, no solar
-    gd = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
-    ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
-
-    nuke_wind = grFuel.capfactor.unstack()[['NUCLEAR', 'WIND']]
-    nuke_wind['datehour'] = nuke_wind.index
-    df = (nuke_wind.assign(timeOfDay=nuke_wind.datehour)
-            .groupby([nuke_wind.index, pd.Grouper(key='timeOfDay', freq='120T')])
-            .mean()
-            .reset_index())
-    tod = ['Midnight to 2am', '2am to 4am', '4am to 6am', '6am to 8am', '8am to 10am', '10am to noon', 'Noon to 2pm', '2pm to 4pm', '4pm to 6pm', '6pm to 8pm', '8pm to 10pm', '10pm to mignight']
-    tod = [zl[0]+' '+zl[1] for zl in zip('ABCDEFGHIJLM', tod)]
-    time_mapper = {i[0]:i[1] for i in zip(np.arange(0, 24, 2), tod)}
-    df = df.set_index('datehour')
-    ind_day_ts = pd.date_range(df.index[0].value, df.index[-1].value, freq='D')
-    ind_day_ts = np.array([pd.Timestamp(i).timestamp() for i in ind_day_ts])
-    forty_eights = np.ones(24, ) * 1000
-    ind_day_ts = [i * forty_eights for i in ind_day_ts ]
-    import itertools
-    ind_day_ts = list(itertools.chain.from_iterable(ind_day_ts))
-    df['timestamps'] = ind_day_ts
-    df['timestamp'] = [pd.Timestamp(i).timestamp() for i in df.index]
-    df['tod2'] = df.timeOfDay.dt.hour
-    df['time_of_day'] = df['tod2'].map(time_mapper)
-    
-    df['day'] = df.index.strftime('%A %B %d')
-    df['date'] = df.index
-    df['dayOfYear'] = df.index.dayofyear
-    unique_days = pd.unique(df.resample('D').mean().index)
-    unique_days = [pd.to_datetime(d) for d in unique_days]
-    unique_days = [d.strftime('%A %B %d') for d in unique_days]
-    day_map = {d:(i+1) for i, d in enumerate(unique_days)}
-    df['day_sequence'] = df.day.map(day_map)
-    nuke = df.drop('WIND', axis=1)
-    nuke['genType'] = 1
-    nuke['OutputCapacityRatio'] = nuke.NUCLEAR
-    wind = df.drop('NUCLEAR', axis=1)
-    wind['genType'] = 2
-    wind['OutputCapacityRatio'] = wind.WIND
-    wind.index = wind.index + pd.Timedelta(minutes=1)
-    newdf = pd.concat([nuke, wind], join='inner')
-    newdf = newdf.sort_index()
-    newdf = newdf[['timestamps', 'day_sequence', 'day', 'time_of_day', 'genType', 'OutputCapacityRatio']]
-    
-    day = 'Sunday December 25'
-    day = df['timestamps'][15]
-    #newdf = newdf.copy()[newdf.day==day]
-    gr = newdf.groupby(['timestamps', 'time_of_day', 'genType']).mean().OutputCapacityRatio
-    gr = gr.unstack()
-    gr.columns = ['Nuclear', 'Wind']
-    gr['day'] = [t[0] for t in gr.index]
-    gr = gr.set_index(gr.index.get_level_values(1))
-    
-    
-    gr2 = gr.copy()
-    unique_days = np.unique(gr.day.values)
-    
-    gr_days  = gr[gr.day.isin(unique_days[-2:])]
-    gr_days['time_of_day'] = gr_days.index
-    gr = gr[gr.day==day]
-    print('long dict: ', gr_days.to_dict(orient='list'))
-    
-    years = ['Nuclear', 'Wind']
-    r = np.random.random(12)
-    data = {'Nuclear'   : (r*0.9).tolist(),
-    'Wind'   : (r*0.2).tolist(),
-    'day' : gr2.iloc[:12, -1].values.tolist(),
-    'time_of_day' : tod,
-    }
-    #data = pd.DataFrame.from_dict(data)
-    #data = gr
-    sourcePlot = ColumnDataSource(data=data)
-    
-    nuke_color = '#3182bd'
-    wind_color = '#ff7f0e'
-    p = figure(x_range=tod, y_range=(0, 1), title='Ontario nuclear generation vs wind, percentage of output to capacity, by time of day, over 91 days',
-    height=350, toolbar_location=None, tools="", )
-    
-    p.vbar(x=dodge('time_of_day', -0.205, range=p.x_range), top='Nuclear', source=sourcePlot,
-    width=0.4, color=nuke_color, legend_label='Nuclear')
-    
-    p.vbar(x=dodge('time_of_day',  0.205,  range=p.x_range), top='Wind', source=sourcePlot,
-    width=0.4, color=wind_color, legend_label='Wind')
-    
-    p.x_range.range_padding = 0.1
-    p.xgrid.grid_line_color = None
-    p.legend.location = "top_left"
-    p.legend.orientation = "horizontal"
-    p.yaxis.formatter=NumeralTickFormatter(format='0%')
-    p.xaxis.major_label_orientation = 0.5
-    
-    p.sizing_mode = 'scale_width'
-    day_in_ms = 86400000
-    source2 = ColumnDataSource(gr2)
-    
-    callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2),
-    code="""
-    const data = sourcePlot.data;
-    const data2 = source2.data;
-    const D = cb_obj.value; 
-    const st = data2['day'].indexOf(D);/* st and en are the indexes of each day's start and end: 12 2-hr periods */
-    const en = st + 12;
-    const newData = {};
-    const ok = ['time_of_day', 'Nuclear', 'Wind'];
-    ok.forEach((key) => {
-    console.log(D, st, en);
-    newData[key] =  data2[key].slice(st, en);
-    });
-    console.log(newData);
-    sourcePlot.data = newData;
-    """)
-    
-    date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], step=day_in_ms, format='%A %B %d %Y', title='Pick a date')
-    date_slider.js_on_change('value', callback)
-    layout = layout(p, date_slider)
-
-    st.bokeh_chart(layout)
-    
+    with st.container():
+        gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
+        gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
+        gen.index.name = 'datehour'
+        
+        capacities = gen.groupby('unit').max().capacity.to_dict()
+        gen['capacity'] = gen['unit'].map(capacities)
+        gen['capfactor'] = gen['output'].divide(gen['capacity'])
+        grFuel = gen.groupby([gen.index, 'fuel']).sum()
+        grFuel['capfactor'] = grFuel['output'].divide(grFuel['capacity'])
+        
+        wind_solar_mask = ['wind', 'solar']
+        wind_solar_mask = gen.fuel.str.contains('|'.join(wind_solar_mask), case=False)
+        gen_ws = gen[wind_solar_mask]
+        gen_nws = gen[~wind_solar_mask] # nws = no wind, no solar
+        gd = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
+        ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
+        
+        nuke_wind = grFuel.capfactor.unstack()[['NUCLEAR', 'WIND']]
+        nuke_wind['datehour'] = nuke_wind.index
+        df = (nuke_wind.assign(timeOfDay=nuke_wind.datehour)
+        .groupby([nuke_wind.index, pd.Grouper(key='timeOfDay', freq='120T')])
+        .mean()
+        .reset_index())
+        tod = ['Midnight to 2am', '2am to 4am', '4am to 6am', '6am to 8am', '8am to 10am', '10am to noon', 'Noon to 2pm', '2pm to 4pm', '4pm to 6pm', '6pm to 8pm', '8pm to 10pm', '10pm to mignight']
+        tod = [zl[0]+' '+zl[1] for zl in zip('ABCDEFGHIJLM', tod)]
+        time_mapper = {i[0]:i[1] for i in zip(np.arange(0, 24, 2), tod)}
+        df = df.set_index('datehour')
+        ind_day_ts = pd.date_range(df.index[0].value, df.index[-1].value, freq='D')
+        ind_day_ts = np.array([pd.Timestamp(i).timestamp() for i in ind_day_ts])
+        forty_eights = np.ones(24, ) * 1000
+        ind_day_ts = [i * forty_eights for i in ind_day_ts ]
+        import itertools
+        ind_day_ts = list(itertools.chain.from_iterable(ind_day_ts))
+        df['timestamps'] = ind_day_ts
+        df['timestamp'] = [pd.Timestamp(i).timestamp() for i in df.index]
+        df['tod2'] = df.timeOfDay.dt.hour
+        df['time_of_day'] = df['tod2'].map(time_mapper)
+        
+        df['day'] = df.index.strftime('%A %B %d')
+        df['date'] = df.index
+        df['dayOfYear'] = df.index.dayofyear
+        unique_days = pd.unique(df.resample('D').mean().index)
+        unique_days = [pd.to_datetime(d) for d in unique_days]
+        unique_days = [d.strftime('%A %B %d') for d in unique_days]
+        day_map = {d:(i+1) for i, d in enumerate(unique_days)}
+        df['day_sequence'] = df.day.map(day_map)
+        nuke = df.drop('WIND', axis=1)
+        nuke['genType'] = 1
+        nuke['OutputCapacityRatio'] = nuke.NUCLEAR
+        wind = df.drop('NUCLEAR', axis=1)
+        wind['genType'] = 2
+        wind['OutputCapacityRatio'] = wind.WIND
+        wind.index = wind.index + pd.Timedelta(minutes=1)
+        newdf = pd.concat([nuke, wind], join='inner')
+        newdf = newdf.sort_index()
+        newdf = newdf[['timestamps', 'day_sequence', 'day', 'time_of_day', 'genType', 'OutputCapacityRatio']]
+        
+        day = 'Sunday December 25'
+        day = df['timestamps'][15]
+        #newdf = newdf.copy()[newdf.day==day]
+        gr = newdf.groupby(['timestamps', 'time_of_day', 'genType']).mean().OutputCapacityRatio
+        gr = gr.unstack()
+        gr.columns = ['Nuclear', 'Wind']
+        gr['day'] = [t[0] for t in gr.index]
+        gr = gr.set_index(gr.index.get_level_values(1))
+        
+        gr2 = gr.copy()
+        unique_days = np.unique(gr.day.values)
+        
+        gr_days  = gr[gr.day.isin(unique_days[-2:])]
+        gr_days['time_of_day'] = gr_days.index
+        gr = gr[gr.day==day]
+        
+        years = ['Nuclear', 'Wind']
+        r = np.random.random(12)
+        data = {'Nuclear'   : gr2.iloc[:12, 0].values,
+        'Wind'   : gr2.iloc[:12, 1].values,
+        'day' : gr2.iloc[:12, -1].values,
+        'time_of_day' : tod,
+        }
+        sourcePlot = ColumnDataSource(data=data)
+        
+        nuke_color = '#3182bd'
+        wind_color = '#ff7f0e'
+        p_nvw = figure(x_range=tod,
+                y_range=(0, 1),
+                title='Ontario nuclear generation vs wind, average percentage of output to capacity, by time of day, over 91 days',
+        height=500,
+        tools='pan, reset, save' )
+        p_nvw.sizing_mode = 'scale_width'
+        p_nvw.vbar(x=dodge('time_of_day', -0.205, range=p_nvw.x_range), top='Nuclear', source=sourcePlot,
+        width=0.4, color=nuke_color, legend_label='Nuclear')
+        
+        p_nvw.vbar(x=dodge('time_of_day',  0.205,  range=p_nvw.x_range), top='Wind', source=sourcePlot,
+        width=0.4, color=wind_color, legend_label='Wind')
+        
+        p_nvw.x_range.range_padding = 0.1
+        p_nvw.xgrid.grid_line_color = None
+        p_nvw.legend.location = "bottom_left"
+        p_nvw.legend.orientation = "horizontal"
+        p_nvw.yaxis.formatter=NumeralTickFormatter(format='0%')
+        p_nvw.xaxis.major_label_orientation = 0.5
+        
+        day_in_ms = 86400000
+        source2 = ColumnDataSource(gr2)
+        
+        callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2),
+        code="""
+        const data = sourcePlot.data;
+        const data2 = source2.data;
+        const D = cb_obj.value; 
+        const st = data2['day'].indexOf(D);/* st and en are the indexes of each day's start and end: 12 2-hr periods */
+        const en = st + 12;
+        const newData = {};
+        const ok = ['time_of_day', 'Nuclear', 'Wind'];
+        ok.forEach((key) => {
+        console.log(D, st, en);
+        newData[key] =  data2[key].slice(st, en);
+        });
+        console.log(newData);
+        sourcePlot.data = newData;
+        """)
+        
+        date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], step=day_in_ms, format='%A %B %d %Y', title='Pick a date')
+        date_slider.js_on_change('value', callback)
+        layout = layout(p_nvw, date_slider)
+        
+        st.bokeh_chart(layout)
+        
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
-    
+    st.markdown('hey ali baba (hey ali baba), yore camel loves you (yore camel loves you?) And everythink like that, or somethink like that') 
 ## --- WHAT I DO ---
 with st.container():
     V_SPACE(1)
