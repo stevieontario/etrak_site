@@ -503,8 +503,9 @@ with st.container():
         
         p_nvw.x_range.range_padding = 0.1
         p_nvw.xgrid.grid_line_color = None
-        p_nvw.legend.location = "bottom_left"
+        p_nvw.legend.location = "top_left"
         p_nvw.legend.orientation = "horizontal"
+        p_nvw.legend.background_fill_alpha = 0.7
         p_nvw.yaxis.formatter=NumeralTickFormatter(format='0%')
         p_nvw.xaxis.major_label_orientation = 0.5
         
