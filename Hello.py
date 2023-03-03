@@ -404,6 +404,16 @@ with st.container():
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
+    st.markdown('### Treacherous because of widespread misconceptions and misinformation about energy and how to supply it')
+    transport_energy_blurb = '''
+    Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. 
+
+    For example, many people believe variable renewable energy sources, like wind and solar, are essential to our energy future. They wave off these sources&#8217; inherent variability as a small matter. But in an energy system where supply must match demand every second of the day, random variability is a serious problem that makes the system less stable and adds to energy costs.
+
+    The plot below illustrates this randomness in the case of wind power in Ontario, and shows that wind is an inappropriate baseload provider. Nuclear on the other hand is the ideal baseload provider. Drag the slider across the 91 days and see for yourself.
+    '''
+    st.markdown(transport_energy_blurb)
+
     with st.container():
         gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
         gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
@@ -534,6 +544,7 @@ with st.container():
         layout = layout(p_nvw, date_slider)
         
         st.bokeh_chart(layout)
+
         
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
 ## --- WHAT I DO ---
@@ -541,11 +552,6 @@ with st.container():
     V_SPACE(1)
     left_column, right_column = st.columns(2)
     with left_column:
-        st.markdown('### Treacherous because of widespread misconceptions and misinformation about energy and how to supply it')
-        transport_energy_blurb = '''
-        Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. 
-        '''
-        st.markdown(transport_energy_blurb)
 
         st.markdown('### And that doesn&#8217;t even include transportation energy!')
         transport_energy_blurb = '''
