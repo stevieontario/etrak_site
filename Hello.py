@@ -9,8 +9,8 @@ import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
-from bokeh.models import ColumnDataSource, NumeralTickFormatter
-from bokeh.palettes import GnBu3, OrRd3
+from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter
+from bokeh.palettes import GnBu3, OrRd3, Category20
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
 
@@ -544,16 +544,48 @@ with st.container():
         layout = layout(p_nvw, date_slider)
         
         st.bokeh_chart(layout)
-        st.markdown('### The treacherous ROAD to baseload ruin')
-        transport_energy_blurb = '''
+        st.markdown('### Types of generation')
+        types_generation_blurb = '''
         Moving through the 91 days, you&#8217;ll notice that wind's ratio of output to demand (expressed in the plot as a percentage) is extremely variable, changing wildly from day to day, and often through a single day. Moreover, it rarely if ever follows daily electrical demand patters. Clearly it is not a baseload supply source.
 
         However, because it is not a ramping or peaking source either&mdash;if it were it would generally follow the daily demand pattern&mdash;it is actually treated as a baseload source. This is an artificial classification. In most grids wind output is subtracted from demand to produce &#8220;net demand.&#8221; Many grid operators use this metric as the basis for dispatch. This means certain fast-reacting supply sources are assigned the job of meeting the fluctuating part of net demand, while others, like nuclear in the plot above, provide baseload.
 
-        OAD is an acronym standing for Ratio of Output to Assigned Demand, and it refers to the electricity system operator&#8217;s conception of the value of a baseload electricity supply source.
+        ROAD is an acronym standing for Ratio of Output to Assigned Demand, and it refers to the electricity system operator&#8217;s conception of the value of a baseload electricity supply source. From the system operator&#8217;s view, you can see the easiest way by far to ensure steady baseload supply is to have as much of it as  possible come from nuclear plants
         '''
-        st.markdown(transport_energy_blurb)
+        st.markdown(types_generation_blurb)
+        st.markdown('### Grid priorities: which generation is most valuable?')
+        valuable_gen_blurb = '''
+        Looking at the same 91 days, the plot below shows individual nuclear unit hourly power production versus that of the combined wind fleet.
+        '''
+        st.markdown(valuable_gen_blurb)
 
+        gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
+        gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
+        gen.index.name = 'datehour'
+        nuke = gen[gen['fuel']=='NUCLEAR']
+        wind = gen[gen['fuel']=='WIND']
+        wind = wind.groupby(wind.index).sum().output
+        nuke_total = nuke.copy().groupby(nuke.copy().index).sum().output
+        nuke = nuke.groupby([nuke.index, 'unit']).mean().output
+        nuke = nuke.unstack()
+        nuke_cols = nuke.columns
+        nuke['Total nuclear'] = nuke_total.values
+        nuke['Total wind'] = wind.values
+        print(nuke.columns[-2:].tolist()+nuke_cols.tolist())
+        nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]
+        p_nvw_output = figure(width=1500, height=550, x_axis_type="datetime")
+        p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
+        
+        for col, color in zip(nuke.columns, Category20[20]):
+            df = nuke[col]
+            p_nvw_output.line(df.index, df, line_width=5, color=color, alpha=0.8, legend_label=col)
+        
+        p_nvw_output.legend.location = "top_left"
+        p_nvw_output.legend.click_policy="hide"
+        p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d\n%I%p'])
+        
+        p_nvw_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
+        st.bokeh_chart(p_nvw_output)
 
         
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
