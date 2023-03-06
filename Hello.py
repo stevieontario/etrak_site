@@ -19,6 +19,8 @@ from bokeh.transform import dodge, factor_cmap
 
 from bokeh.layouts import layout, column
 from bokeh.models.widgets import DateSlider
+from random import shuffle
+print(type(Category20c[20]))
 
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
@@ -418,7 +420,6 @@ with st.container():
         gen.index.name = 'datehour'
         
         capacities = gen.groupby('unit').max().capacity.to_dict()
-        print('capacities: ', capacities)
         gen['capacity'] = gen['unit'].map(capacities)
         gen['capfactor'] = gen['output'].divide(gen['capacity'])
         grFuel = gen.groupby([gen.index, 'fuel']).sum()
@@ -580,8 +581,9 @@ with st.container():
         p_nvw_output = figure(height=550, x_axis_type="datetime", tools=tools)
         p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
         p_nvw_output.sizing_mode = 'scale_width'
-        
-        for col, color in zip(nuke.columns, Category20c[20][::-1]):
+        c20c = list(Category20c[20])
+        shuffle(c20c)
+        for col, color in zip(nuke.columns, c20c):
             df = nuke[col]
             p_nvw_output.line(df.index, df, line_width=5, color=color, alpha=0.8, legend_label=col)
         
