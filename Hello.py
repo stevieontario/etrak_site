@@ -198,7 +198,6 @@ with st.container():
         sums.index = sums.index.map({'total_w':'Total heat demand', 'ldc_wint_peak':'Total LDC winter peaks', 'ldc_avg_peak':'Total LDC average peaks'})
         sums.loc['TC Energy Pumped Storage Hydro'] = 1000
         sums.loc['Bruce Nuclear Station Capacity'] = 6555
-        print(sums)
         
         layer = pdk.Layer(
         "ColumnLayer",
@@ -304,7 +303,6 @@ with st.container():
         df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
         dt = df['datehour_my'].values[0]
         dt = pd.to_datetime(dt).strftime('%a %b %d %I%p')
-        print('dt: ', dt)
         df_sums = df['total_w'].sum()
         df_sums_dict = {'Bruce Nuclear Station Capacity':6555, 'Total ON Res. Heat Demand':df_sums,
             'Adam Beck 2 Hydro Generator':1630, 'TC Energy Pumped Storage Hydro':1000, 'Oneida Battery':250}
@@ -361,7 +359,6 @@ with st.container():
         st.pydeck_chart(r)
         x = df_totals.sort_values(ascending=False)
         y = df_totals.sort_values(ascending=False).index
-        print('df: ', x, y.values)
         p_totals = figure(
         height=200,
         title= 'Total Ontario residential heat demand compared with selected capacities, MW, '+dt,
@@ -421,6 +418,7 @@ with st.container():
         gen.index.name = 'datehour'
         
         capacities = gen.groupby('unit').max().capacity.to_dict()
+        print('capacities: ', capacities)
         gen['capacity'] = gen['unit'].map(capacities)
         gen['capfactor'] = gen['output'].divide(gen['capacity'])
         grFuel = gen.groupby([gen.index, 'fuel']).sum()
@@ -533,10 +531,8 @@ with st.container():
         const newData = {};
         const ok = ['time_of_day', 'Nuclear', 'Wind'];
         ok.forEach((key) => {
-        console.log(D, st, en);
         newData[key] =  data2[key].slice(st, en);
         });
-        console.log(newData);
         sourcePlot.data = newData;
         """)
         
@@ -551,7 +547,15 @@ with st.container():
 
         However, because it is not a ramping or peaking source either&mdash;if it were it would generally follow the daily demand pattern&mdash;it is actually treated as a baseload source. This is an artificial classification. In most grids wind output is subtracted from demand to produce &#8220;net demand.&#8221; Many grid operators use this metric as the basis for dispatch. This means certain fast-reacting supply sources are assigned the job of meeting the fluctuating part of net demand, while others, like nuclear in the plot above, provide baseload.
 
-        ROAD is an acronym standing for Ratio of Output to Assigned Demand, and it refers to the electricity system operator&#8217;s conception of the value of a baseload electricity supply source. From the system operator&#8217;s view, you can see the easiest way by far to ensure steady baseload supply is to have as much of it as  possible come from nuclear plants
+        ROAD is an acronym standing for Ratio of Output to Assigned Demand, and it refers to the electricity system operator&#8217;s conception of the value of a baseload electricity supply source. In the plot above, dragging the slider back and forth across the 91 days shows which of the two sources is the more reliable provider of power on the grid. 
+
+        With nuclear, ROAD is easy to calculate. It is simply the capacity of a given generating unit. From the plot, you can see that no matter the time of day, the nuclear fleet (18 units in all, 3 of which are currently under refurbishment) generates at a high output to capacity ratio. The system operator is virtually assured of the fleet generating at close to the sum of the available units&#8217; capacity.
+
+        Wind is a different matter. The significant fluctuations through the day, and across days, means the system operator must assume that wind can contribute only a portion of a &#8220;blended&#8221; megawatt of power. This &#8220;blend&#8221; in Ontario is is any of a combination of fast-responding sources/sinks of electrical power. A rule of thumb proposed in a [recent research paper](https://epic.uchicago.edu/wp-content/uploads/2019/07/Do-Renewable-Portfolio-Standards-Deliver.pdf) is that for every megawatt of variable renewable energy (wind and solar) capacity, there should be 1.13 MW of  &#8220;conventional&#8221; generation. 
+
+        This means that for each megawatt of demand assigned to be supplied by the blend of wind and conventional generation, wind can contribute, at most, about 47 percent of it. At least 53 percent of that megawatt must come from some form of conventional generation, either inside or outside the system.
+
+        From the system operator&#8217;s view, you can see the easiest way by far to ensure steady baseload supply is to have as much of it as  possible come from nuclear plants
         '''
         st.markdown(types_generation_blurb)
         st.markdown('### Grid priorities: which generation is most valuable?')
@@ -572,10 +576,10 @@ with st.container():
         nuke_cols = nuke.columns
         nuke['Total nuclear'] = nuke_total.values
         nuke['Total wind'] = wind.values
-        print(nuke.columns[-2:].tolist()+nuke_cols.tolist())
         nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]
-        p_nvw_output = figure(width=1500, height=550, x_axis_type="datetime", tools=tools)
+        p_nvw_output = figure(height=550, x_axis_type="datetime", tools=tools)
         p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
+        p_nvw_output.sizing_mode = 'scale_width'
         
         for col, color in zip(nuke.columns, Category20[20]):
             df = nuke[col]
@@ -584,7 +588,6 @@ with st.container():
         p_nvw_output.legend.location = "top_left"
         p_nvw_output.legend.click_policy="hide"
         p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d\n%I%p'])
-        
         p_nvw_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
         st.bokeh_chart(p_nvw_output)
 
