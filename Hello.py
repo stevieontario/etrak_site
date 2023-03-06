@@ -20,6 +20,7 @@ from bokeh.transform import dodge, factor_cmap
 from bokeh.layouts import layout, column
 from bokeh.models.widgets import DateSlider
 
+tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
 def style_num(x):
     cols = x.select_dtypes(np.number).columns
@@ -573,7 +574,7 @@ with st.container():
         nuke['Total wind'] = wind.values
         print(nuke.columns[-2:].tolist()+nuke_cols.tolist())
         nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]
-        p_nvw_output = figure(width=1500, height=550, x_axis_type="datetime")
+        p_nvw_output = figure(width=1500, height=550, x_axis_type="datetime", tools=tools)
         p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
         
         for col, color in zip(nuke.columns, Category20[20]):
