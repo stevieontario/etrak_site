@@ -10,7 +10,7 @@ from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
 from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter
-from bokeh.palettes import GnBu3, OrRd3, Category20
+from bokeh.palettes import GnBu3, OrRd3, Category20c
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
 
@@ -581,7 +581,7 @@ with st.container():
         p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
         p_nvw_output.sizing_mode = 'scale_width'
         
-        for col, color in zip(nuke.columns, Category20[20]):
+        for col, color in zip(nuke.columns, Category20c[20][::-1]):
             df = nuke[col]
             p_nvw_output.line(df.index, df, line_width=5, color=color, alpha=0.8, legend_label=col)
         
@@ -589,6 +589,9 @@ with st.container():
         p_nvw_output.legend.click_policy="hide"
         p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d\n%I%p'])
         p_nvw_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
+        p_nvw_output.xaxis.major_label_orientation = 0.5
+        p_nvw_output.legend.background_fill_alpha = 0.5
+        p_nvw_output.legend.orientation = 'vertical'
         st.bokeh_chart(p_nvw_output)
 
         
