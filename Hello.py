@@ -404,7 +404,7 @@ with st.container():
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
-    st.markdown('### Treacherous because of widespread misconceptions and misinformation about energy and how to supply it')
+    st.markdown('### The treacherous ROAD to baseload ruin')
     transport_energy_blurb = '''
     Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. 
 
@@ -544,6 +544,16 @@ with st.container():
         layout = layout(p_nvw, date_slider)
         
         st.bokeh_chart(layout)
+        st.markdown('### The treacherous ROAD to baseload ruin')
+        transport_energy_blurb = '''
+        Moving through the 91 days, you&#8217;ll notice that wind's ratio of output to demand (expressed in the plot as a percentage) is extremely variable, changing wildly from day to day, and often through a single day. Moreover, it rarely if ever follows daily electrical demand patters. Clearly it is not a baseload supply source.
+
+        However, because it is not a ramping or peaking source either&mdash;if it were it would generally follow the daily demand pattern&mdash;it is actually treated as a baseload source. This is an artificial classification. In most grids wind output is subtracted from demand to produce &#8220;net demand.&#8221; Many grid operators use this metric as the basis for dispatch. This means certain fast-reacting supply sources are assigned the job of meeting the fluctuating part of net demand, while others, like nuclear in the plot above, provide baseload.
+
+        OAD is an acronym standing for Ratio of Output to Assigned Demand, and it refers to the electricity system operator&#8217;s conception of the value of a baseload electricity supply source.
+        '''
+        st.markdown(transport_energy_blurb)
+
 
         
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
