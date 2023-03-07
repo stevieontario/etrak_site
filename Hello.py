@@ -404,7 +404,7 @@ with st.container():
     On the plus side, their revenues will skyrocket&mdash;as will the dividends returned to their municipal owners. So it also means ***money***&mdash;for LDCs and their municipal shareholders. Most LDCs in Ontario submit 100 percent of their profits to their shareholders, which go into general municipal revenue.
     '''
     st.markdown(heating_map_blurb)
-    st.markdown('### The treacherous ROAD to baseload ruin')
+    st.markdown('### The treacherous ROAD to baseload instability')
     transport_energy_blurb = '''
     Energy literacy is essential to planning ahead. Time is finite. Capital is finite. Bad decisions in this field can have repercussions that last decades. Those repercussions affect us all. 
 
@@ -504,7 +504,7 @@ with st.container():
                 title='Ontario nuclear generation vs wind, average percentage of output to capacity, by time of day, over 91 days',
         height=500,
         tools='pan, reset, save' )
-        p_nvw.sizing_mode = 'scale_width'
+        p_nvw.sizing_mode = 'scale_both'
         p_nvw.vbar(x=dodge('time_of_day', -0.205, range=p_nvw.x_range), top='Nuclear', source=sourcePlot,
         width=0.4, color=nuke_color, legend_label='Nuclear')
         
@@ -579,8 +579,8 @@ with st.container():
         nuke['Total wind'] = wind.values
         nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]
         p_nvw_output = figure(height=550, x_axis_type="datetime", tools=tools)
-        p_nvw_output.title.text = 'Nuclear and wind output, megawatts\nClick on legend entries to hide the corresponding lines'
-        p_nvw_output.sizing_mode = 'scale_width'
+        p_nvw_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding lines'
+        p_nvw_output.sizing_mode = 'scale_both'
         c20c = list(Category20c[20])
         shuffle(c20c)
         for col, color in zip(nuke.columns, c20c):
