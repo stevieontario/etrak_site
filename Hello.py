@@ -9,7 +9,7 @@ import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
-from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter
+from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter, HoverTool
 from bokeh.palettes import GnBu3, OrRd3, Category20c
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
@@ -574,12 +574,13 @@ with st.container():
         nuke_total = nuke.copy().groupby(nuke.copy().index).sum().output
         nuke = nuke.groupby([nuke.index, 'unit']).mean().output
         nuke = nuke.unstack()
-        nuke_cols = nuke.columns
+        nuke['date'] = wind.index.values
+        nuke_cols = nuke.columns[:-1]
         nuke['Total nuclear'] = nuke_total.values
         nuke['Total wind'] = wind.values
-        nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]
+        nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]#put total_nuke and total_wind on top
         p_nvw_output = figure(height=550, x_axis_type="datetime", tools=tools)
-        p_nvw_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding lines'
+        p_nvw_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding output curves'
         p_nvw_output.sizing_mode = 'scale_both'
         c20c = list(Category20c[20])
         shuffle(c20c)
