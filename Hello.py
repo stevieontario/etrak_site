@@ -590,7 +590,7 @@ with st.container():
         
         p_nvw_output.legend.location = "top_left"
         p_nvw_output.legend.click_policy="hide"
-        p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d\n%I%p'])
+        p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d %I%p'])
         p_nvw_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
         p_nvw_output.xaxis.major_label_orientation = 0.5
         p_nvw_output.legend.background_fill_alpha = 0.5
