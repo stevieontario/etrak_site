@@ -20,7 +20,6 @@ from bokeh.transform import dodge, factor_cmap
 from bokeh.layouts import layout, column
 from bokeh.models.widgets import DateSlider
 from random import shuffle
-print(type(Category20c[20]))
 
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
@@ -442,13 +441,16 @@ with st.container():
         tod = [zl[0]+' '+zl[1] for zl in zip('ABCDEFGHIJLM', tod)]
         time_mapper = {i[0]:i[1] for i in zip(np.arange(0, 24, 2), tod)}
         df = df.set_index('datehour')
+        print('df index shape: ', df.index.shape)
         ind_day_ts = pd.date_range(df.index[0].value, df.index[-1].value, freq='D')
         ind_day_ts = np.array([pd.Timestamp(i).timestamp() for i in ind_day_ts])
         forty_eights = np.ones(24, ) * 1000
         ind_day_ts = [i * forty_eights for i in ind_day_ts ]
+
+        print('ind_day_ts times forty_eights shape: ', len(ind_day_ts))
         import itertools
         ind_day_ts = list(itertools.chain.from_iterable(ind_day_ts))
-        df['timestamps'] = ind_day_ts
+        df['timestamps'] = ind_day_ts[:-48]
         df['timestamp'] = [pd.Timestamp(i).timestamp() for i in df.index]
         df['tod2'] = df.timeOfDay.dt.hour
         df['time_of_day'] = df['tod2'].map(time_mapper)
