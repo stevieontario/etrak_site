@@ -4,23 +4,27 @@ import pandas as pd
 import numpy as np
 import requests
 import os
+import json
 path = os.path.dirname(__file__)
 import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
-from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter, HoverTool
+from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter, HoverTool, Range1d, Span, MultiSelect, Row, Column
 from bokeh.palettes import GnBu3, OrRd3, Category20c
 from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker
+from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker, TextInput
 
 from bokeh.models.callbacks import CustomJS
 from bokeh.transform import dodge, factor_cmap
 
 from bokeh.layouts import layout, column
-from bokeh.models.widgets import DateSlider
+from bokeh.models.widgets import DateSlider, RadioButtonGroup
 from random import shuffle
 
+#--common data preprocessing---
+
+gen_json = pd.read_json('http://canadianenergyissues.com/data/ieso_genoutputcap_v7.json')# note version!
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
 def style_num(x):
@@ -119,8 +123,8 @@ with st.container():
         ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
         ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Average_Peak_Load_Without_Embedded_Generation_kW']
         
-        dfs = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
-        dfs_orig = pd.read_csv(path+'/data/on_weather_stationdata_subset.csv').set_index('community_name')
+        dfs = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_subset.json').set_index('community_name')
+        dfs_orig = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_subset.json').set_index('community_name')
         dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
         cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
            'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
@@ -130,7 +134,8 @@ with st.container():
         dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
 
         dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
-        dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
+        #dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)# 'community_name.1' is in csv, not json
+        dfs_orig = dfs_orig.drop(['datehour_ec', 'datehour_my'], axis=1)
         
         # three sets of locational data for this map: from Ontario weather stations, OEB electricity yearbook, and geopy.geocoders.Nominatim. All contain varying names of the communities and LDCs. This requires these names be standardized via mapping.
         ws_names = ['London Int\'l Airport', 'Thunder Bay Airport',# ws = weather station
@@ -283,12 +288,17 @@ with st.container():
             st.dataframe(dfs_orig.style.format(thousands=',', precision=2, subset=numeric_cols))
     else:
 # --- ONTARIO "HEAT" MAP -- 
-        df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
+
+        df = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_noLDC.json').set_index('community_name')
+        print('json: ', df.head())
+        #df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
+        #print('csv: ', df.head())
 
 
         df= df.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
 
         #df = df.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)
+        df['community_name'] = df.index
         df['Longitude'] = np.where(df.community_name=='Thunder Bay', -89.2477, df.Longitude)
         df['Longitude'] = np.where(df.community_name=='Kenora', -94.4894, df.Longitude)
         df['Latitude'] = np.where(df.community_name=='Thunder Bay', 48.382221, df.Latitude)
@@ -414,14 +424,15 @@ with st.container():
     st.markdown(transport_energy_blurb)
 
     with st.container():
-        gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
-        gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
-        gen.index.name = 'datehour'
+        gen = gen_json.copy()
+        gen['datehour'] = pd.to_datetime(gen.datehour, unit='ms')
+        gen = gen.set_index('datehour')
         
         capacities = gen.groupby('unit').max().capacity.to_dict()
         gen['capacity'] = gen['unit'].map(capacities)
         gen['capfactor'] = gen['output'].divide(gen['capacity'])
         grFuel = gen.groupby([gen.index, 'fuel']).sum()
+
         grFuel['capfactor'] = grFuel['output'].divide(grFuel['capacity'])
         
         wind_solar_mask = ['wind', 'solar']
@@ -432,6 +443,7 @@ with st.container():
         ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
         
         nuke_wind = grFuel.capfactor.unstack()[['NUCLEAR', 'WIND']]
+
         nuke_wind['datehour'] = nuke_wind.index
         df = (nuke_wind.assign(timeOfDay=nuke_wind.datehour)
         .groupby([nuke_wind.index, pd.Grouper(key='timeOfDay', freq='120T')])
@@ -441,16 +453,16 @@ with st.container():
         tod = [zl[0]+' '+zl[1] for zl in zip('ABCDEFGHIJLM', tod)]
         time_mapper = {i[0]:i[1] for i in zip(np.arange(0, 24, 2), tod)}
         df = df.set_index('datehour')
-        print('df index shape: ', df.index.shape)
         ind_day_ts = pd.date_range(df.index[0].value, df.index[-1].value, freq='D')
-        ind_day_ts = np.array([pd.Timestamp(i).timestamp() for i in ind_day_ts])
-        forty_eights = np.ones(24, ) * 1000
-        ind_day_ts = [i * forty_eights for i in ind_day_ts ]
 
-        print('ind_day_ts times forty_eights shape: ', len(ind_day_ts))
+        ind_day_ts = np.array([pd.Timestamp(i).timestamp() for i in ind_day_ts])
+        twenty_fours = np.ones(24, ) * 1000
+        ind_day_ts = [i * twenty_fours for i in ind_day_ts ]
+
         import itertools
         ind_day_ts = list(itertools.chain.from_iterable(ind_day_ts))
-        df['timestamps'] = ind_day_ts[:-48]
+
+        df['timestamps'] = ind_day_ts
         df['timestamp'] = [pd.Timestamp(i).timestamp() for i in df.index]
         df['tod2'] = df.timeOfDay.dt.hour
         df['time_of_day'] = df['tod2'].map(time_mapper)
@@ -501,9 +513,10 @@ with st.container():
         
         nuke_color = '#3182bd'
         wind_color = '#ff7f0e'
+        day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%A %B %d %Y')
         p_nvw = figure(x_range=tod,
                 y_range=(0, 1),
-                title='Ontario nuclear generation vs wind, average percentage of output to capacity, by time of day, over 91 days',
+                title='Ontario nuclear generation vs wind, average percentage of output\nto capacity, by time of day '+day,
         height=500,
         tools='pan, reset, save' )
         p_nvw.sizing_mode = 'scale_both'
@@ -524,11 +537,23 @@ with st.container():
         day_in_ms = 86400000
         source2 = ColumnDataSource(gr2)
         
-        callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2),
+        callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2, figTitle=p_nvw.title.text, p_nvw=p_nvw),
         code="""
         const data = sourcePlot.data;
         const data2 = source2.data;
         const D = cb_obj.value; 
+        console.log(cb_obj.value);
+        const D_formatted = new Date(D);
+        const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour12: false,
+        hour: "numeric",
+        timezone: "UTC"
+        };
+        const D_hr = D_formatted.toLocaleString("en-US", options);
         const st = data2['day'].indexOf(D);/* st and en are the indexes of each day's start and end: 12 2-hr periods */
         const en = st + 12;
         const newData = {};
@@ -536,6 +561,11 @@ with st.container():
         ok.forEach((key) => {
         newData[key] =  data2[key].slice(st, en);
         });
+        const ft = `Ontario nuclear generation vs wind, average percentage of output
+        to capacity, by time of day `;
+        const ft2 = ft+D_hr;
+        figTitle = ft2;
+        p_nvw.title.text = figTitle;
         sourcePlot.data = newData;
         """)
         
@@ -566,10 +596,14 @@ with st.container():
         Looking at the same 91 days, the plot below shows individual nuclear unit hourly power production versus that of the combined wind fleet.
         '''
         st.markdown(valuable_gen_blurb)
+        gen = gen_json.copy()
+        gen['datehour'] = pd.to_datetime(gen.datehour, unit='ms')
+        gen = gen.set_index('datehour')
+        gen['datehour'] = gen.index
 
-        gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
-        gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
-        gen.index.name = 'datehour'
+        #gen = pd.read_csv(path+'/data/ieso_genoutputcap_v6.csv')# note version!
+        #gen = gen.set_index(pd.to_datetime(gen.iloc[:,0]))
+        #gen.index.name = 'datehour'
         nuke = gen[gen['fuel']=='NUCLEAR']
         wind = gen[gen['fuel']=='WIND']
         wind = wind.groupby(wind.index).sum().output
@@ -581,26 +615,191 @@ with st.container():
         nuke['Total nuclear'] = nuke_total.values
         nuke['Total wind'] = wind.values
         nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]#put total_nuke and total_wind on top
-        p_nvw_output = figure(height=550, x_axis_type="datetime", tools=tools)
-        p_nvw_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding output curves'
-        p_nvw_output.sizing_mode = 'scale_both'
+        p_indNuke_output = figure(height=550, x_axis_type="datetime", tools=tools)
+        p_indNuke_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding output curves'
+        p_indNuke_output.sizing_mode = 'scale_both'
         c20c = list(Category20c[20])
         shuffle(c20c)
         for col, color in zip(nuke.columns, c20c):
             df = nuke[col]
-            p_nvw_output.line(df.index, df, line_width=5, color=color, alpha=0.8, legend_label=col)
+            p_indNuke_output.line(df.index, df, line_width=5, color=color, alpha=0.8, legend_label=col)
         
-        p_nvw_output.legend.location = "top_left"
-        p_nvw_output.legend.click_policy="hide"
-        p_nvw_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d %I%p'])
-        p_nvw_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
-        p_nvw_output.xaxis.major_label_orientation = 0.5
-        p_nvw_output.legend.background_fill_alpha = 0.5
-        p_nvw_output.legend.orientation = 'vertical'
-        st.bokeh_chart(p_nvw_output)
-
-        
+        p_indNuke_output.legend.location = "top_left"
+        p_indNuke_output.legend.click_policy="hide"
+        p_indNuke_output.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %b %d %I%p'])
+        p_indNuke_output.yaxis.formatter=NumeralTickFormatter(format='0,0')
+        p_indNuke_output.xaxis.major_label_orientation = 0.5
+        p_indNuke_output.legend.background_fill_alpha = 0.5
+        p_indNuke_output.legend.orientation = 'vertical'
+        st.bokeh_chart(p_indNuke_output)
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
+
+        #--BEGINNING OF MULTISELECT SOURCE/SINK TYPES
+        st.markdown('### Which sources/sinks contribute most to the shape of demand?')
+        valuable_gen_blurb = '''
+        Looking again at the same 91 days, the plot below shows all 20+ megawatt individual sources and sinks of electrical power on the southern Ontario grid (all reporting entities east of the [IESO&#8217;s northwest zone](https://www.ieso.ca/localContent/zonal.map/index.html)). You can select any combination of individual sources/sinks in each category.
+
+        '''
+        st.markdown(valuable_gen_blurb)
+
+# --- EXIM AND GENOUTPUT DATA PREPROCESSING --
+        exim = pd.read_json('http://canadianenergyissues.com/data/exim_ytd.json')
+        exim = exim.set_index(pd.to_datetime(exim.index))
+        
+        dfs = gen_json.copy()
+        dfs['datehour'] = pd.to_datetime(dfs.datehour, unit='ms')
+        dfs = dfs.set_index('datehour')
+        dfs['datehour'] = dfs.index
+        
+        wind_solar_mask = ['wind', 'solar']
+        wind_solar_mask = dfs.fuel.str.contains('|'.join(wind_solar_mask), case=False)
+        dfs_nws = dfs[~wind_solar_mask] # nws = no wind, no solar
+        gd = dfs_nws.groupby([dfs_nws.index, 'unit']).mean().output.unstack()
+        
+        solar = dfs[dfs['fuel']=='SOLAR']
+        wind = dfs[dfs['fuel']=='WIND']
+        g = lambda x: x.groupby(x.index).sum().output.to_frame()
+        wind = g(wind)
+        solar = g(solar)
+        gdws = dfs[wind_solar_mask].groupby([dfs[wind_solar_mask].index, 'unit']).mean().output.unstack() 
+        gd_st_dt = gd.index.get_level_values(0)[0]
+        gd_en_dt = gd.index.get_level_values(0)[-1]
+        exim = exim.drop_duplicates()
+        en_dt = exim.tail(1).index.values[0]
+        en_dt = pd.to_datetime(en_dt)
+        exim_matched = exim.loc[gd_st_dt:gd_en_dt] #########
+        exim_matched = exim.iloc[:, :-3].multiply(1)# in on_net_dem_svd.py this is multiplied by -1
+        
+        #del exim_matched['datehour']
+        
+        exim_with_total = exim_matched.copy()
+        exim_with_total['total'] = exim_with_total.sum(axis=1)
+        gd = gd.join(exim_matched, how='inner')
+        # --- END OF EXIM, GENOUTPUT DATA PREPROCESSING ----
+        
+        pq = exim.columns.str.contains('PQ')
+        pq_cols = exim.loc[:,pq].columns[:-1]
+        a = exim.copy()[pq_cols]
+        #df = df.copy().loc['January 1 2022':'december 31 2022', ['MICHIGAN', 'NEW-YORK', 'Quebec total']]
+        a_bokeh_cols = a.iloc[:, [0, 2, 3, 4, 5, 6]]
+        
+        unitTypes = open(path+'/data/unit_classifications_final_southern.json')
+        unitTypes = json.load(unitTypes)
+        sourceType = ['nuclear', 'non-nuclear baseload', 'ramping', 'peaking', 'dancers']
+        
+        gd = gd.loc[gd_st_dt:en_dt]
+        newdf = gd.copy()
+        newdf['Total'] = newdf.sum(axis=1)
+        
+        tdf = pd.read_json('http://canadianenergyissues.com/data/zonedem_since_2003.json')
+        #tdf = tdf.set_index(tdf.datehour)
+        tdf.index = pd.to_datetime(tdf.index)
+        #del tdf['datehour']
+        
+        dems = tdf.loc[gd_st_dt:en_dt]
+        dems.loc[:, 'Zone_total_less_northwest'] = dems['Zone Total'].subtract(dems['Northwest'])
+        
+        netdem = dems['Zone_total_less_northwest'].subtract(solar.output)
+        netdem = netdem.subtract(wind.output).to_frame()
+        netdem['datehour'] = netdem.index
+        netdem.columns = ['demand', 'datehour']
+        netdem.index = np.arange(0, netdem.shape[0])
+        dem_source = ColumnDataSource(data=netdem)
+        new_newdf = newdf.copy()
+        new_newdf['datehour'] = new_newdf.index
+        new_newdf['total'] = new_newdf.Total.values
+        new_newdf.index = np.arange(0, new_newdf.shape[0])
+        
+        sourceSink_source = ColumnDataSource(data=new_newdf)
+        sourceSink_source2 = ColumnDataSource(data=new_newdf)
+        
+        x = netdem.index
+        
+        y = netdem.values
+        y2 = newdf.Total.values
+        
+        tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
+        
+        tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
+        
+        lead_double = u"\u201c"
+        follow_double = u"\u201d"
+        lead_single = u"\u2018"
+        follow_single = u"\u2019"
+        #title = 'Ontario net demand and sum of selected '+sourceType.title()+' sources/sinks. MW'
+        title = 'Ontario '+lead_double+'southern'+follow_double+' grid net demand and sum of selected sources/sinks, MW'
+        pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), y_range=(0, dems['Ontario Demand'].max()), tools=tools)
+        
+        pt.line('datehour', 'demand', source=dem_source, color='black', line_width=3)
+        pt.yaxis.axis_label = 'Net demand'
+        pt.yaxis.axis_label_text_color = 'black'
+        pt.yaxis.axis_label_text_font_style = 'bold'
+        
+        r = Range1d(start=0, end=new_newdf.total.max())
+        pt.extra_y_ranges = {"Dancers": r}
+        pt.line('datehour', 'total', source=sourceSink_source, color='red', y_range_name="Dancers", line_width=3)
+        pt.add_layout(LinearAxis(y_range_name="Dancers", axis_label='Sum of net supply sources/sinks',
+        axis_label_text_color='red', axis_label_text_font_style='bold'), 'right')
+        
+        pt.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %m %d %I%p'])
+        
+        hline = Span(location=0, dimension='width', line_color='black', line_width=3)
+        pt.yaxis.formatter=NumeralTickFormatter(format='0,0')
+        pt.yaxis[0].major_label_text_color = 'black'
+        pt.yaxis[1].major_label_text_color = 'red'
+        pt.yaxis[0].major_label_text_font_style = 'bold'
+        pt.yaxis[1].major_label_text_font_style = 'bold'
+        pt.renderers.extend([hline])
+        
+        rbv = ''
+        options = unitTypes['dancers']
+        multiselect = MultiSelect(title = 'Choose one or more sources/sinks', value = [], options = options, sizing_mode='stretch_height', width_policy='min')
+        a = RadioButtonGroup(active=4, labels=sourceType, orientation='horizontal', aspect_ratio='auto', sizing_mode='stretch_height')
+        callback2 = CustomJS(args={'multiselect':multiselect,'unitTypes':unitTypes, 'a':a}, code="""
+        const val = a.active;
+        const lab = a.labels;
+        const sourceType = lab[val];
+        multiselect.options=unitTypes[sourceType];
+        console.log('wh-options: ', multiselect.options);
+        console.log(val, sourceType);
+        """)
+        
+        callback = CustomJS(args = {'sourceSink_source': sourceSink_source, 'sourceSink_source2': sourceSink_source2, 'r': r, 'unitTypes':unitTypes,'a':a, 'options':multiselect.options, 's':multiselect},
+        code = """
+        function sum(arrays) {
+        return arrays.reduce((acc, array) => acc.map((sum, i) => sum + array[i]), new Array(arrays[0].length).fill(0));
+        }
+        options.value = unitTypes[a.value];
+        console.log('options dude hey: ', options);
+        const are = r;
+        console.log('are: ', are);
+        var data = sourceSink_source.data;
+        var data2 =sourceSink_source2.data;
+        console.log(data['datehour']);
+        var select_sourcesSinks = cb_obj.value;
+        const arr = [];
+        select_sourcesSinks.forEach((key) => {
+        arr.push(data2[key]);
+        });
+        const newSource = {'datehour': data2['datehour']};
+        newSource['total'] = sum(arr);
+        const newMin = Math.min(...newSource['total']);
+        const newMax = Math.max(...newSource['total']);
+        are.start=newMin;
+        are.end=newMax;
+        sourceSink_source.data = newSource;
+        """)
+        
+        multiselect.js_on_change('value', callback)
+        a.js_on_click(callback2) 
+        pt.xaxis.major_label_orientation = 0.5
+        pt.sizing_mode='scale_height'
+        layout = Row(pt, multiselect)
+        layout2 = Column(a, layout)
+        st.bokeh_chart(layout2)
+
+
+        #-- end of multiselect source/sink types
 ## --- WHAT I DO ---
 with st.container():
     V_SPACE(1)
