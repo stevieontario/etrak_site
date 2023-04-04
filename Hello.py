@@ -542,17 +542,11 @@ with st.container():
         const data = sourcePlot.data;
         const data2 = source2.data;
         const D = cb_obj.value; 
-        console.log(cb_obj.value);
+        console.log(D);
         const D_formatted = new Date(D);
-        const options = {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour12: false,
-        timezone: "UTC"
-        };
-        const D_hr = D_formatted.toLocaleString("en-US", options);
+        const proper_dt = D_formatted.toLocaleString('en-US', { timeZone: 'UTC',
+weekday: 'long', month:'long', day: 'numeric', year:'numeric', hour12: false, timezone: 'UTC'
+                                                })
         const st = data2['day'].indexOf(D);/* st and en are the indexes of each day's start and end: 12 2-hr periods */
         const en = st + 12;
         const newData = {};
@@ -561,8 +555,8 @@ with st.container():
         newData[key] =  data2[key].slice(st, en);
         });
         const ft = `Ontario nuclear generation vs wind, average percentage of output
-        to capacity, by time of day `;
-        const ft2 = ft+D_hr;
+to capacity, by time of day `;
+        const ft2 = ft+proper_dt;
         figTitle = ft2;
         p_nvw.title.text = figTitle;
         sourcePlot.data = newData;
