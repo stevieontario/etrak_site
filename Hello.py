@@ -133,7 +133,7 @@ with st.container():
            'total_w', 'total_w_per_dwelling']
         dfs = dfs.copy().loc[:, ['datehour_my', 'dwellings', 'ceiling_w', 'total_w']]
 
-        dt = pd.to_datetime(dfs_orig['datehour_my']).dt.strftime('%a %b %d %I%p').values[0]
+        dt = pd.to_datetime(dfs_orig['datehour_my'], unit='ms').dt.strftime('%a %b %d %I%p').values[0]
         #dfs_orig = dfs_orig.drop(['community_name.1', 'datehour_ec', 'datehour_my'], axis=1)# 'community_name.1' is in csv, not json
         dfs_orig = dfs_orig.drop(['datehour_ec', 'datehour_my'], axis=1)
         
@@ -197,7 +197,7 @@ with st.container():
         
         dfs['formatted_w'] = dfs['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
         dfs['formatted_e_w'] = dfs['ldc_wint_peak'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
-        dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'].values).strftime('%a %b %d, %I%p')
+        dfs['datehour_formatted'] = pd.to_datetime(dfs['datehour_my'], unit='ms').dt.strftime('%a %b %d, %I%p')
 
         sums = dfs[['total_w', 'ldc_wint_peak', 'ldc_avg_peak']]
         sums = sums.sum()
@@ -313,7 +313,7 @@ with st.container():
                
         df['formatted_w'] = df['total_w'].apply(lambda d: '{0:,.0f}'.format(d) if d >= 1 else '{0:,.2f}'.format(d))
         dt = df['datehour_my'].values[0]
-        dt = pd.to_datetime(dt).strftime('%a %b %d %I%p')
+        dt = pd.to_datetime(dt, unit='ms').strftime('%a %b %d %I%p')
         df_sums = df['total_w'].sum()
         df_sums_dict = {'Bruce Nuclear Station Capacity':6555, 'Total ON Res. Heat Demand':df_sums,
             'Adam Beck 2 Hydro Generator':1630, 'TC Energy Pumped Storage Hydro':1000, 'Oneida Battery':250}
@@ -550,7 +550,6 @@ with st.container():
         month: "long",
         day: "numeric",
         hour12: false,
-        hour: "numeric",
         timezone: "UTC"
         };
         const D_hr = D_formatted.toLocaleString("en-US", options);
