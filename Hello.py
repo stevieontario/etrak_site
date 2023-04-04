@@ -509,11 +509,13 @@ with st.container():
         'day' : gr2.iloc[:12, -1].values,
         'time_of_day' : tod,
         }
+        wa = data['Wind']
+        wam = np.array(wa).mean()
         sourcePlot = ColumnDataSource(data=data)
         
         nuke_color = '#3182bd'
         wind_color = '#ff7f0e'
-        day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%A %B %d %Y')
+        day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%A, %B %d %Y')
         p_nvw = figure(x_range=tod,
                 y_range=(0, 1),
                 title='Ontario nuclear generation vs wind, average percentage of output\nto capacity, by time of day '+day,
@@ -525,6 +527,8 @@ with st.container():
         
         p_nvw.vbar(x=dodge('time_of_day',  0.205,  range=p_nvw.x_range), top='Wind', source=sourcePlot,
         width=0.4, color=wind_color, legend_label='Wind')
+
+        wind_mean_hline = Span(location=wam, dimension='width', line_color=wind_color, line_width=3)
         
         p_nvw.x_range.range_padding = 0.1
         p_nvw.xgrid.grid_line_color = None
@@ -532,37 +536,47 @@ with st.container():
         p_nvw.legend.orientation = "horizontal"
         p_nvw.legend.background_fill_alpha = 0.7
         p_nvw.yaxis.formatter=NumeralTickFormatter(format='0%')
-        p_nvw.xaxis.major_label_orientation = 0.5
+        p_nvw.xaxis.major_label_orientation = 0.7
+        #p_nvw.renderers.extend([wind_mean_hline])
         
         day_in_ms = 86400000
         source2 = ColumnDataSource(gr2)
+        print('gr2: ', gr2.head())
         
-        callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2, figTitle=p_nvw.title.text, p_nvw=p_nvw),
+        callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2, figTitle=p_nvw.title.text, p_nvw=p_nvw, wind_mean_hline=wind_mean_hline),
         code="""
         const data = sourcePlot.data;
         const data2 = source2.data;
         const D = cb_obj.value; 
         console.log(D);
+        const mean_loc = wind_mean_hline.location;
         const D_formatted = new Date(D);
-        const proper_dt = D_formatted.toLocaleString('en-US', { timeZone: 'UTC',
-weekday: 'long', month:'long', day: 'numeric', year:'numeric', hour12: false, timezone: 'UTC'
-                                                })
+        const proper_dt = D_formatted.toLocaleString('en-US', { 
+            timeZone: 'UTC', 
+            weekday: 'long', 
+            month:'long', 
+            day: 'numeric', 
+            year:'numeric',  
+        });
         const st = data2['day'].indexOf(D);/* st and en are the indexes of each day's start and end: 12 2-hr periods */
         const en = st + 12;
         const newData = {};
         const ok = ['time_of_day', 'Nuclear', 'Wind'];
         ok.forEach((key) => {
-        newData[key] =  data2[key].slice(st, en);
+            newData[key] =  data2[key].slice(st, en);
         });
+
+        const wa = newData['Wind'];
+        console.log('wa: ', wa);
         const ft = `Ontario nuclear generation vs wind, average percentage of output
-to capacity, by time of day `;
+to capacity, by time of day, for `;
         const ft2 = ft+proper_dt;
         figTitle = ft2;
         p_nvw.title.text = figTitle;
         sourcePlot.data = newData;
         """)
         
-        date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], step=day_in_ms, format='%A %B %d %Y', title='Pick a date')
+        date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], step=day_in_ms, format='%A, %B %d %Y', tooltips=False, height=100, bar_color='green',  title='Pick a date')
         date_slider.js_on_change('value', callback)
         layout = layout(p_nvw, date_slider)
         
