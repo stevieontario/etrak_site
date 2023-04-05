@@ -290,9 +290,7 @@ with st.container():
 # --- ONTARIO "HEAT" MAP -- 
 
         df = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_noLDC.json').set_index('community_name')
-        print('json: ', df.head())
         #df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
-        #print('csv: ', df.head())
 
 
         df= df.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
@@ -541,7 +539,6 @@ with st.container():
         
         day_in_ms = 86400000
         source2 = ColumnDataSource(gr2)
-        print('gr2: ', gr2.head())
         
         callback = CustomJS(args=dict(sourcePlot=sourcePlot, source2=source2, figTitle=p_nvw.title.text, p_nvw=p_nvw, wind_mean_hline=wind_mean_hline),
         code="""
@@ -642,16 +639,16 @@ to capacity, by time of day, for `;
         # --- END OF ONTARIO LDC HEAT DEMAND MAP
 
         #--BEGINNING OF MULTISELECT SOURCE/SINK TYPES
-        st.markdown('### Which sources/sinks contribute most to the shape of demand?')
-        valuable_gen_blurb = '''
-        Looking again at the same 91 days, the plot below shows all 20+ megawatt individual sources and sinks of electrical power on the southern Ontario grid (all reporting entities east of the [IESO&#8217;s northwest zone](https://www.ieso.ca/localContent/zonal.map/index.html)). You can select any combination of individual sources/sinks in each category.
-
-        '''
-        st.markdown(valuable_gen_blurb)
+        #st.markdown('### Which sources/sinks contribute most to the shape of demand?')
+        #valuable_gen_blurb = '''
+        #Looking again at the same 91 days, the plot below shows all 20+ megawatt individual sources and sinks of electrical power on the southern Ontario grid (all reporting entities east of the [IESO&#8217;s northwest zone](https://www.ieso.ca/localContent/zonal.map/index.html)). You can select any combination of individual sources/sinks in each category.
+#
+        #'''
+        #st.markdown(valuable_gen_blurb)
 
 # --- EXIM AND GENOUTPUT DATA PREPROCESSING --
         exim = pd.read_json('http://canadianenergyissues.com/data/exim_ytd.json')
-        exim = exim.set_index(pd.to_datetime(exim.index))
+        exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
         
         dfs = gen_json.copy()
         dfs['datehour'] = pd.to_datetime(dfs.datehour, unit='ms')
@@ -669,141 +666,143 @@ to capacity, by time of day, for `;
         wind = g(wind)
         solar = g(solar)
         gdws = dfs[wind_solar_mask].groupby([dfs[wind_solar_mask].index, 'unit']).mean().output.unstack() 
-        gd_st_dt = gd.index.get_level_values(0)[0]
-        gd_en_dt = gd.index.get_level_values(0)[-1]
+        gd_st_dt = pd.to_datetime(gd.index.get_level_values(0)[0], unit='ms')
+        gd_en_dt = pd.to_datetime(gd.index.get_level_values(0)[-1], unit='ms')
         exim = exim.drop_duplicates()
         en_dt = exim.tail(1).index.values[0]
         en_dt = pd.to_datetime(en_dt)
-        exim_matched = exim.loc[gd_st_dt:gd_en_dt] #########
-        exim_matched = exim.iloc[:, :-3].multiply(1)# in on_net_dem_svd.py this is multiplied by -1
-        
-        #del exim_matched['datehour']
-        
-        exim_with_total = exim_matched.copy()
-        exim_with_total['total'] = exim_with_total.sum(axis=1)
-        gd = gd.join(exim_matched, how='inner')
-        # --- END OF EXIM, GENOUTPUT DATA PREPROCESSING ----
-        
-        pq = exim.columns.str.contains('PQ')
-        pq_cols = exim.loc[:,pq].columns[:-1]
-        a = exim.copy()[pq_cols]
-        #df = df.copy().loc['January 1 2022':'december 31 2022', ['MICHIGAN', 'NEW-YORK', 'Quebec total']]
-        a_bokeh_cols = a.iloc[:, [0, 2, 3, 4, 5, 6]]
-        
-        unitTypes = open(path+'/data/unit_classifications_final_southern.json')
-        unitTypes = json.load(unitTypes)
-        sourceType = ['nuclear', 'non-nuclear baseload', 'ramping', 'peaking', 'dancers']
-        
-        gd = gd.loc[gd_st_dt:en_dt]
-        newdf = gd.copy()
-        newdf['Total'] = newdf.sum(axis=1)
-        
-        tdf = pd.read_json('http://canadianenergyissues.com/data/zonedem_since_2003.json')
-        #tdf = tdf.set_index(tdf.datehour)
-        tdf.index = pd.to_datetime(tdf.index)
-        #del tdf['datehour']
-        
-        dems = tdf.loc[gd_st_dt:en_dt]
-        dems.loc[:, 'Zone_total_less_northwest'] = dems['Zone Total'].subtract(dems['Northwest'])
-        
-        netdem = dems['Zone_total_less_northwest'].subtract(solar.output)
-        netdem = netdem.subtract(wind.output).to_frame()
-        netdem['datehour'] = netdem.index
-        netdem.columns = ['demand', 'datehour']
-        netdem.index = np.arange(0, netdem.shape[0])
-        dem_source = ColumnDataSource(data=netdem)
-        new_newdf = newdf.copy()
-        new_newdf['datehour'] = new_newdf.index
-        new_newdf['total'] = new_newdf.Total.values
-        new_newdf.index = np.arange(0, new_newdf.shape[0])
-        
-        sourceSink_source = ColumnDataSource(data=new_newdf)
-        sourceSink_source2 = ColumnDataSource(data=new_newdf)
-        
-        x = netdem.index
-        
-        y = netdem.values
-        y2 = newdf.Total.values
-        
-        tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
-        
-        tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
-        
-        lead_double = u"\u201c"
-        follow_double = u"\u201d"
-        lead_single = u"\u2018"
-        follow_single = u"\u2019"
-        #title = 'Ontario net demand and sum of selected '+sourceType.title()+' sources/sinks. MW'
-        title = 'Ontario '+lead_double+'southern'+follow_double+' grid net demand and sum of selected sources/sinks, MW'
-        pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), y_range=(0, dems['Ontario Demand'].max()), tools=tools)
-        
-        pt.line('datehour', 'demand', source=dem_source, color='black', line_width=3)
-        pt.yaxis.axis_label = 'Net demand'
-        pt.yaxis.axis_label_text_color = 'black'
-        pt.yaxis.axis_label_text_font_style = 'bold'
-        
-        r = Range1d(start=0, end=new_newdf.total.max())
-        pt.extra_y_ranges = {"Dancers": r}
-        pt.line('datehour', 'total', source=sourceSink_source, color='red', y_range_name="Dancers", line_width=3)
-        pt.add_layout(LinearAxis(y_range_name="Dancers", axis_label='Sum of net supply sources/sinks',
-        axis_label_text_color='red', axis_label_text_font_style='bold'), 'right')
-        
-        pt.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %m %d %I%p'])
-        
-        hline = Span(location=0, dimension='width', line_color='black', line_width=3)
-        pt.yaxis.formatter=NumeralTickFormatter(format='0,0')
-        pt.yaxis[0].major_label_text_color = 'black'
-        pt.yaxis[1].major_label_text_color = 'red'
-        pt.yaxis[0].major_label_text_font_style = 'bold'
-        pt.yaxis[1].major_label_text_font_style = 'bold'
-        pt.renderers.extend([hline])
-        
-        rbv = ''
-        options = unitTypes['dancers']
-        multiselect = MultiSelect(title = 'Choose one or more sources/sinks', value = [], options = options, sizing_mode='stretch_height', width_policy='min')
-        a = RadioButtonGroup(active=4, labels=sourceType, orientation='horizontal', aspect_ratio='auto', sizing_mode='stretch_height')
-        callback2 = CustomJS(args={'multiselect':multiselect,'unitTypes':unitTypes, 'a':a}, code="""
-        const val = a.active;
-        const lab = a.labels;
-        const sourceType = lab[val];
-        multiselect.options=unitTypes[sourceType];
-        console.log('wh-options: ', multiselect.options);
-        console.log(val, sourceType);
-        """)
-        
-        callback = CustomJS(args = {'sourceSink_source': sourceSink_source, 'sourceSink_source2': sourceSink_source2, 'r': r, 'unitTypes':unitTypes,'a':a, 'options':multiselect.options, 's':multiselect},
-        code = """
-        function sum(arrays) {
-        return arrays.reduce((acc, array) => acc.map((sum, i) => sum + array[i]), new Array(arrays[0].length).fill(0));
-        }
-        options.value = unitTypes[a.value];
-        console.log('options dude hey: ', options);
-        const are = r;
-        console.log('are: ', are);
-        var data = sourceSink_source.data;
-        var data2 =sourceSink_source2.data;
-        console.log(data['datehour']);
-        var select_sourcesSinks = cb_obj.value;
-        const arr = [];
-        select_sourcesSinks.forEach((key) => {
-        arr.push(data2[key]);
-        });
-        const newSource = {'datehour': data2['datehour']};
-        newSource['total'] = sum(arr);
-        const newMin = Math.min(...newSource['total']);
-        const newMax = Math.max(...newSource['total']);
-        are.start=newMin;
-        are.end=newMax;
-        sourceSink_source.data = newSource;
-        """)
-        
-        multiselect.js_on_change('value', callback)
-        a.js_on_click(callback2) 
-        pt.xaxis.major_label_orientation = 0.5
-        pt.sizing_mode='scale_height'
-        layout = Row(pt, multiselect)
-        layout2 = Column(a, layout)
-        st.bokeh_chart(layout2)
+        print(exim.tail())
+        print('matched datetimes: gd_en_dt TYPE is ', type(gd_en_dt), ', and exim TYPE is: ', type(exim.tail(1).index[0]))
+        #exim_matched = exim.loc[gd_st_dt:gd_en_dt] #########
+        #exim_matched = exim.iloc[:, :-3].multiply(1)# in on_net_dem_svd.py this is multiplied by -1
+        #
+        ##del exim_matched['datehour']
+        #
+        #exim_with_total = exim_matched.copy()
+        #exim_with_total['total'] = exim_with_total.sum(axis=1)
+        #gd = gd.join(exim_matched, how='inner')
+        ## --- END OF EXIM, GENOUTPUT DATA PREPROCESSING ----
+        #
+        #pq = exim.columns.str.contains('PQ')
+        #pq_cols = exim.loc[:,pq].columns[:-1]
+        #a = exim.copy()[pq_cols]
+        ##df = df.copy().loc['January 1 2022':'december 31 2022', ['MICHIGAN', 'NEW-YORK', 'Quebec total']]
+        #a_bokeh_cols = a.iloc[:, [0, 2, 3, 4, 5, 6]]
+        #
+        #unitTypes = open(path+'/data/unit_classifications_final_southern.json')
+        #unitTypes = json.load(unitTypes)
+        #sourceType = ['nuclear', 'non-nuclear baseload', 'ramping', 'peaking', 'dancers']
+        #
+        #gd = gd.loc[gd_st_dt:en_dt]
+        #newdf = gd.copy()
+        #newdf['Total'] = newdf.sum(axis=1)
+        #
+        #tdf = pd.read_json('http://canadianenergyissues.com/data/zonedem_since_2003.json')
+        ##tdf = tdf.set_index(tdf.datehour)
+        #tdf.index = pd.to_datetime(tdf.index)
+        ##del tdf['datehour']
+        #
+        #dems = tdf.loc[gd_st_dt:en_dt]
+        #dems.loc[:, 'Zone_total_less_northwest'] = dems['Zone Total'].subtract(dems['Northwest'])
+        #
+        #netdem = dems['Zone_total_less_northwest'].subtract(solar.output)
+        #netdem = netdem.subtract(wind.output).to_frame()
+        #netdem['datehour'] = netdem.index
+        #netdem.columns = ['demand', 'datehour']
+        #netdem.index = np.arange(0, netdem.shape[0])
+        #dem_source = ColumnDataSource(data=netdem)
+        #new_newdf = newdf.copy()
+        #new_newdf['datehour'] = new_newdf.index
+        #new_newdf['total'] = new_newdf.Total.values
+        #new_newdf.index = np.arange(0, new_newdf.shape[0])
+        #
+        #sourceSink_source = ColumnDataSource(data=new_newdf)
+        #sourceSink_source2 = ColumnDataSource(data=new_newdf)
+        #
+        #x = netdem.index
+        #
+        #y = netdem.values
+        #y2 = newdf.Total.values
+        #
+        #tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
+        #
+        #tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
+        #
+        #lead_double = u"\u201c"
+        #follow_double = u"\u201d"
+        #lead_single = u"\u2018"
+        #follow_single = u"\u2019"
+        ##title = 'Ontario net demand and sum of selected '+sourceType.title()+' sources/sinks. MW'
+        #title = 'Ontario '+lead_double+'southern'+follow_double+' grid net demand and sum of selected sources/sinks, MW'
+        #pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), y_range=(0, dems['Ontario Demand'].max()), tools=tools)
+        #
+        #pt.line('datehour', 'demand', source=dem_source, color='black', line_width=3)
+        #pt.yaxis.axis_label = 'Net demand'
+        #pt.yaxis.axis_label_text_color = 'black'
+        #pt.yaxis.axis_label_text_font_style = 'bold'
+        #
+        #r = Range1d(start=0, end=new_newdf.total.max())
+        #pt.extra_y_ranges = {"Dancers": r}
+        #pt.line('datehour', 'total', source=sourceSink_source, color='red', y_range_name="Dancers", line_width=3)
+        #pt.add_layout(LinearAxis(y_range_name="Dancers", axis_label='Sum of net supply sources/sinks',
+        #axis_label_text_color='red', axis_label_text_font_style='bold'), 'right')
+        #
+        #pt.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %y'], days=['%a %b %d'], hours=['%a %m %d %I%p'])
+        #
+        #hline = Span(location=0, dimension='width', line_color='black', line_width=3)
+        #pt.yaxis.formatter=NumeralTickFormatter(format='0,0')
+        #pt.yaxis[0].major_label_text_color = 'black'
+        #pt.yaxis[1].major_label_text_color = 'red'
+        #pt.yaxis[0].major_label_text_font_style = 'bold'
+        #pt.yaxis[1].major_label_text_font_style = 'bold'
+        #pt.renderers.extend([hline])
+        #
+        #rbv = ''
+        #options = unitTypes['dancers']
+        #multiselect = MultiSelect(title = 'Choose one or more sources/sinks', value = [], options = options, sizing_mode='stretch_height', width_policy='min')
+        #a = RadioButtonGroup(active=4, labels=sourceType, orientation='horizontal', aspect_ratio='auto', sizing_mode='stretch_height')
+        #callback2 = CustomJS(args={'multiselect':multiselect,'unitTypes':unitTypes, 'a':a}, code="""
+        #const val = a.active;
+        #const lab = a.labels;
+        #const sourceType = lab[val];
+        #multiselect.options=unitTypes[sourceType];
+        #console.log('wh-options: ', multiselect.options);
+        #console.log(val, sourceType);
+        #""")
+        #
+        #callback = CustomJS(args = {'sourceSink_source': sourceSink_source, 'sourceSink_source2': sourceSink_source2, 'r': r, 'unitTypes':unitTypes,'a':a, 'options':multiselect.options, 's':multiselect},
+        #code = """
+        #function sum(arrays) {
+        #return arrays.reduce((acc, array) => acc.map((sum, i) => sum + array[i]), new Array(arrays[0].length).fill(0));
+        #}
+        #options.value = unitTypes[a.value];
+        #console.log('options dude hey: ', options);
+        #const are = r;
+        #console.log('are: ', are);
+        #var data = sourceSink_source.data;
+        #var data2 =sourceSink_source2.data;
+        #console.log(data['datehour']);
+        #var select_sourcesSinks = cb_obj.value;
+        #const arr = [];
+        #select_sourcesSinks.forEach((key) => {
+        #arr.push(data2[key]);
+        #});
+        #const newSource = {'datehour': data2['datehour']};
+        #newSource['total'] = sum(arr);
+        #const newMin = Math.min(...newSource['total']);
+        #const newMax = Math.max(...newSource['total']);
+        #are.start=newMin;
+        #are.end=newMax;
+        #sourceSink_source.data = newSource;
+        #""")
+        #
+        #multiselect.js_on_change('value', callback)
+        #a.js_on_click(callback2) 
+        #pt.xaxis.major_label_orientation = 0.5
+        #pt.sizing_mode='scale_height'
+        #layout = Row(pt, multiselect)
+        #layout2 = Column(a, layout)
+        #st.bokeh_chart(layout2)
 
 
         #-- end of multiselect source/sink types
