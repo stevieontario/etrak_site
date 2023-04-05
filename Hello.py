@@ -515,7 +515,7 @@ with st.container():
         
         nuke_color = '#3182bd'
         wind_color = '#ff7f0e'
-        day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%A, %B %d %Y')
+        day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%a, %b %d %Y')
         p_nvw = figure(x_range=tod,
                 y_range=(0, 1),
                 title='Ontario nuclear generation vs wind, average percentage of output\nto capacity, by time of day '+day,
@@ -553,8 +553,8 @@ with st.container():
         const D_formatted = new Date(D);
         const proper_dt = D_formatted.toLocaleString('en-US', { 
             timeZone: 'UTC', 
-            weekday: 'long', 
-            month:'long', 
+            weekday: 'short', 
+            month:'short', 
             day: 'numeric', 
             year:'numeric',  
         });
