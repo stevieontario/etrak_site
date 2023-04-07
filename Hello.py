@@ -27,6 +27,11 @@ from random import shuffle
 gen_json = pd.read_json('http://canadianenergyissues.com/data/ieso_genoutputcap_v7.json')# note version!
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
+lead_double = u"\u201c"
+follow_double = u"\u201d"
+lead_single = u"\u2018"
+follow_single = u"\u2019"
+
 def style_num(x):
     cols = x.select_dtypes(np.number).columns
     df1 = pd.DataFrame('', index=x.index, columns=x.columns)
@@ -643,7 +648,14 @@ to capacity, by time of day, for `;
         valuable_gen_blurb = '''
         Looking again at the same 91 days, the plot below shows all 20+ megawatt individual sources and sinks of electrical power on the southern Ontario grid (all reporting entities east of the [IESO&#8217;s northwest zone](https://www.ieso.ca/localContent/zonal.map/index.html)). You can select any combination of individual sources/sinks in each category.
 
+        The sources/sinks in the &ldquo;dancers &rdquo; category perform today what variable renewable energy (VRE) proponents claim that storage&mdash;by which they usually mean chemical batteries&mdash;will perform in an all-VRE grid. As you can see, the &ldquo;dancers &rdquo; comprise nearly 12,000 MW of &ldquo;capacity &rdquo;. Battery storage today costs upward of \$500 per kWh.
+
+        For 12,000 MW of capacity to run for one hour would require at least \$6 billion worth of batteries, for 2 hours \$12 billion worth; and for 10 hours, \$60 billion. A grid dominated by VRE-plus-storage is simply not financially viable.
+
         '''
+        math_str = '''
+$ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
+'''
         st.markdown(valuable_gen_blurb)
 
 # --- EXIM AND GENOUTPUT DATA PREPROCESSING --
@@ -729,10 +741,6 @@ to capacity, by time of day, for `;
         
         tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
         
-        lead_double = u"\u201c"
-        follow_double = u"\u201d"
-        lead_single = u"\u2018"
-        follow_single = u"\u2019"
         #title = 'Ontario net demand and sum of selected '+sourceType.title()+' sources/sinks. MW'
         title = 'Ontario '+lead_double+'southern'+follow_double+' grid net demand and sum of selected sources/sinks, MW'
         pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), y_range=(0, dems['Ontario Demand'].max()), min_border_left=-4, tools=tools)
