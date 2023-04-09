@@ -24,7 +24,7 @@ from random import shuffle
 
 #--common data preprocessing---
 
-gen_json = pd.read_json('http://canadianenergyissues.com/data/ieso_genoutputcap_v7.json')# note version!
+gen_json = pd.read_json('/home/steveaplin/Documents/eda/ieso_genoutputcap_v7.json')# note version!
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
 lead_double = u"\u201c"
@@ -128,8 +128,8 @@ with st.container():
         ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
         ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Average_Peak_Load_Without_Embedded_Generation_kW']
         
-        dfs = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_subset.json').set_index('community_name')
-        dfs_orig = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_subset.json').set_index('community_name')
+        dfs = pd.read_json('/home/steveaplin/Documents/eda/on_weather_stationdata_subset.json').set_index('community_name')
+        dfs_orig = pd.read_json('/home/steveaplin/Documents/eda/on_weather_stationdata_subset.json').set_index('community_name')
         dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
         cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
            'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
@@ -294,7 +294,7 @@ with st.container():
     else:
 # --- ONTARIO "HEAT" MAP -- 
 
-        df = pd.read_json('http://canadianenergyissues.com/data/on_weather_stationdata_noLDC.json').set_index('community_name')
+        df = pd.read_json('/home/steveaplin/Documents/eda/on_weather_stationdata_noLDC.json').set_index('community_name')
         #df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
 
 
@@ -659,7 +659,7 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         st.markdown(valuable_gen_blurb)
 
 # --- EXIM AND GENOUTPUT DATA PREPROCESSING --
-        exim = pd.read_json('http://canadianenergyissues.com/data/exim_ytd.json')
+        exim = pd.read_json('/home/steveaplin/Documents/eda/exim_ytd.json')
         exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
         
         dfs = gen_json.copy()
@@ -710,7 +710,7 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         newdf = gd.copy()
         newdf['Total'] = newdf.sum(axis=1)
         
-        tdf = pd.read_json('http://canadianenergyissues.com/data/zonedem_since_2003.json')
+        tdf = pd.read_json('/home/steveaplin/Documents/eda/zonedem_since_2003.json')
         #tdf = tdf.set_index(tdf.datehour)
         tdf.index = pd.to_datetime(tdf.index)
         #del tdf['datehour']
