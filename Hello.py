@@ -25,6 +25,9 @@ from random import shuffle
 #--common data preprocessing---
 
 gen_json = pd.read_json('/home/steveaplin/Documents/eda/ieso_genoutputcap_v7.json')# note version!
+exim = pd.read_json('/home/steveaplin/Documents/eda/exim_ytd.json')
+exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
+
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
 alectra_munis = ['Alliston', 'Beeton', 'Bradford', 'Tottenham', 'Aurora', 'Markham', 'Richmond Hill', 'Vaughan', 'Brampton', 'Mississauga', 'St. Catharines', 'Hamilton', 'Lynden', 'Guelph', 'Rockwood', 'Thornton', 'Barrie', 'Penetanguishene']
 lead_double = u"\u201c"
@@ -280,7 +283,7 @@ with st.container():
         p.add_layout(xaxis, 'below')
 
         p.xaxis.formatter=NumeralTickFormatter(format='0a')
-        p.sizing_mode = 'scale_width'
+        p.sizing_mode = 'scale_both'
         st.bokeh_chart(p)
 
 
@@ -393,7 +396,7 @@ with st.container():
         color = '#BA3655'
         p_totals.hbar(right=x, y=y, height=0.5, color=color)
         p_totals.xaxis.formatter=NumeralTickFormatter(format='0a')
-        p_totals.sizing_mode = 'scale_width'
+        p_totals.sizing_mode = 'scale_both'
         st.bokeh_chart(p_totals)
 
         with st.expander('view the data for the map'):
@@ -522,7 +525,7 @@ with st.container():
         p_nvw = figure(x_range=tod,
                 y_range=(0, 1),
                 title='Ontario nuclear generation vs wind, average percentage of output\nto capacity, by time of day '+day,
-        height=500,
+        #height=500,
         tools='pan, reset, save' )
         p_nvw.sizing_mode = 'scale_both'
         p_nvw.vbar(x=dodge('time_of_day', -0.205, range=p_nvw.x_range), top='Nuclear', source=sourcePlot,
@@ -659,8 +662,6 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         st.markdown(valuable_gen_blurb)
 
 # --- EXIM AND GENOUTPUT DATA PREPROCESSING --
-        exim = pd.read_json('/home/steveaplin/Documents/eda/exim_ytd.json')
-        exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
         
         dfs = gen_json.copy()
         dfs['datehour'] = pd.to_datetime(dfs.datehour, unit='ms')
@@ -683,17 +684,11 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         exim = exim.drop_duplicates()
         en_dt = exim.tail(1).index.values[0]
         en_dt = pd.to_datetime(en_dt)
-        print(exim.tail())
-        print('matched datetimes: gd_en_dt TYPE is ', type(gd_en_dt), ', and exim TYPE is: ', type(exim.tail(1).index[0]))
-        #exim_matched = exim.loc[gd_st_dt:gd_en_dt] #########
         exim_matched = exim.iloc[:, :-3].multiply(1)# in on_net_dem_svd.py this is multiplied by -1
-        print(exim_matched.tail())
-        #del exim_matched['datehour']
         
         exim_with_total = exim_matched.copy()
         exim_with_total['total'] = exim_with_total.sum(axis=1)
         gd = gd.join(exim_matched, how='inner')
-        print(gd.tail())
         # --- END OF EXIM, GENOUTPUT DATA PREPROCESSING ----
         
         pq = exim.columns.str.contains('PQ')
@@ -808,7 +803,7 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         multiselect.js_on_change('value', callback)
         a.js_on_click(callback2) 
         pt.xaxis.major_label_orientation = 0.5
-        pt.sizing_mode='scale_height'
+        pt.sizing_mode='scale_both'
         layout = Row(pt, multiselect)
         layout2 = Column(a, layout)
         st.bokeh_chart(layout2)
