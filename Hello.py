@@ -10,7 +10,7 @@ import pydeck as pdk
 from st_pages import Page, show_pages, add_page_title
 import bokeh
 from bokeh.sampledata.autompg import autompg_clean as dfb
-from bokeh.models import ColumnDataSource, NumeralTickFormatter, DatetimeTickFormatter, HoverTool, Range1d, Span, MultiSelect, Row, Column
+from bokeh.models import ColumnDataSource, RangeTool, Select,  NumeralTickFormatter, DatetimeTickFormatter, HoverTool, Range1d, Span, MultiSelect, Row, Column
 from bokeh.palettes import GnBu3, OrRd3, Category20c
 from bokeh.plotting import figure, show
 from bokeh.models import ColumnDataSource, Grid, HBar, LinearAxis, Plot, Div, SingleIntervalTicker, TextInput
@@ -24,7 +24,11 @@ from random import shuffle
 
 #--common data preprocessing---
 
-gen_json = pd.read_json('/home/steveaplin/Documents/eda/ieso_genoutputcap_v7.json')# note version!
+endash = u'\u2013'
+tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
+PATH = '/home/steveaplin/Documents/eda/'
+PATH = ''
+gen_json = pd.read_json(PATH+'ieso_genoutputcap_v7.json')# note version!
 exim = pd.read_json('/home/steveaplin/Documents/eda/exim_ytd.json')
 exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
 
@@ -524,10 +528,11 @@ with st.container():
         day = pd.to_datetime(newdf['timestamps'][0], unit='ms').strftime('%a, %b %d %Y')
         p_nvw = figure(x_range=tod,
                 y_range=(0, 1),
+                aspect_ratio = 9/7,
                 title='Ontario nuclear generation vs wind, average percentage of output\nto capacity, by time of day '+day,
         #height=500,
         tools='pan, reset, save' )
-        p_nvw.sizing_mode = 'scale_both'
+        p_nvw.sizing_mode = 'stretch_width'
         p_nvw.vbar(x=dodge('time_of_day', -0.205, range=p_nvw.x_range), top='Nuclear', source=sourcePlot,
         width=0.4, color=nuke_color, legend_label='Nuclear')
         
@@ -553,7 +558,6 @@ with st.container():
         const data = sourcePlot.data;
         const data2 = source2.data;
         const D = cb_obj.value; 
-        console.log(D);
         const mean_loc = wind_mean_hline.location;
         const D_formatted = new Date(D);
         const proper_dt = D_formatted.toLocaleString('en-US', { 
@@ -572,7 +576,6 @@ with st.container():
         });
 
         const wa = newData['Wind'];
-        console.log('wa: ', wa);
         const ft = `Ontario nuclear generation vs wind, average percentage of output
 to capacity, by time of day, for `;
         const ft2 = ft+proper_dt;
@@ -581,7 +584,8 @@ to capacity, by time of day, for `;
         sourcePlot.data = newData;
         """)
         
-        date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], step=day_in_ms, format='%A, %B %d %Y', tooltips=False, height=100, bar_color='green',  title='Pick a date')
+        date_slider = DateSlider(start=newdf['timestamps'][0], end=newdf['timestamps'][-1], value=newdf['timestamps'][0], aspect_ratio='auto', step=day_in_ms, format='%A, %B %d %Y', tooltips=False, height=100, bar_color='green',  title='Pick a date')
+        date_slider.sizing_mode='scale_width'
         date_slider.js_on_change('value', callback)
         layout = layout(p_nvw, date_slider)
         
@@ -627,9 +631,9 @@ to capacity, by time of day, for `;
         nuke['Total nuclear'] = nuke_total.values
         nuke['Total wind'] = wind.values
         nuke = nuke[nuke.columns[-2:].tolist()+nuke_cols.tolist()]#put total_nuke and total_wind on top
-        p_indNuke_output = figure(height=550, x_axis_type="datetime", tools=tools)
+        p_indNuke_output = figure(height=500, x_axis_type="datetime", aspect_ratio=16/10, tools=tools)
         p_indNuke_output.title.text = 'Ontario nuclear and wind hourly electrical output, last 91 days, megawatts\nClick on legend entries to hide the corresponding output curves'
-        p_indNuke_output.sizing_mode = 'scale_both'
+        p_indNuke_output.sizing_mode = 'stretch_both'
         c20c = list(Category20c[20])
         shuffle(c20c)
         for col, color in zip(nuke.columns, c20c):
@@ -699,6 +703,10 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         
         unitTypes = open(path+'/data/unit_classifications_final_southern.json')
         unitTypes = json.load(unitTypes)
+
+        dancers = unitTypes['dancers']
+        unitTypes = {key:sorted(unitTypes[key]) for key in list(unitTypes.keys()) if 'dancers' not in key}
+        unitTypes['dancers'] = dancers
         sourceType = ['nuclear', 'non-nuclear baseload', 'ramping', 'peaking', 'dancers']
         
         gd = gd.loc[gd_st_dt:en_dt]
@@ -733,12 +741,10 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         y2 = newdf.Total.values
         
         tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
-        
-        tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
-        
+         
         #title = 'Ontario net demand and sum of selected '+sourceType.title()+' sources/sinks. MW'
         title = 'Ontario '+lead_double+'southern'+follow_double+' grid net demand and sum of selected sources/sinks, MW'
-        pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), y_range=(0, dems['Ontario Demand'].max()), min_border_left=-4, tools=tools)
+        pt = figure(title=title, x_range=(dems.index[0], dems.index[-1]), aspect_ratio = 16/10, y_range=(0, dems['Ontario Demand'].max()), min_border_left=-4, tools=tools)
         
         pt.line('datehour', 'demand', source=dem_source, color='black', line_width=3)
         pt.yaxis.axis_label = 'Net demand'
@@ -761,17 +767,16 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         pt.yaxis[1].major_label_text_font_style = 'bold'
         pt.renderers.extend([hline])
         
-        rbv = ''
+        print('unitTypes: ', unitTypes)
         options = unitTypes['dancers']
         multiselect = MultiSelect(title = 'Choose one or more sources/sinks', value = [], options = options, sizing_mode='stretch_height', width_policy='min')
-        a = RadioButtonGroup(active=4, labels=sourceType, orientation='horizontal', aspect_ratio='auto', sizing_mode='stretch_height')
-        callback2 = CustomJS(args={'multiselect':multiselect,'unitTypes':unitTypes, 'a':a}, code="""
+        a = RadioButtonGroup(active=4, labels=sourceType, orientation='horizontal', aspect_ratio='auto', sizing_mode='stretch_width')
+        callback2 = CustomJS(args={'multiselect':multiselect,'unitTypes':unitTypes, 'a':a}, code=
+        """
         const val = a.active;
         const lab = a.labels;
         const sourceType = lab[val];
         multiselect.options=unitTypes[sourceType];
-        console.log('wh-options: ', multiselect.options);
-        console.log(val, sourceType);
         """)
         
         callback = CustomJS(args = {'sourceSink_source': sourceSink_source, 'sourceSink_source2': sourceSink_source2, 'r': r, 'unitTypes':unitTypes,'a':a, 'options':multiselect.options, 's':multiselect},
@@ -780,17 +785,14 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         return arrays.reduce((acc, array) => acc.map((sum, i) => sum + array[i]), new Array(arrays[0].length).fill(0));
         }
         options.value = unitTypes[a.value];
-        console.log('options dude hey: ', options);
         const are = r;
-        console.log('are: ', are);
         var data = sourceSink_source.data;
         var data2 =sourceSink_source2.data;
-        console.log(data['datehour']);
         var select_sourcesSinks = cb_obj.value;
         const arr = [];
         select_sourcesSinks.forEach((key) => {
-        arr.push(data2[key]);
-        });
+            arr.push(data2[key]);
+            });
         const newSource = {'datehour': data2['datehour']};
         newSource['total'] = sum(arr);
         const newMin = Math.min(...newSource['total']);
@@ -803,13 +805,80 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         multiselect.js_on_change('value', callback)
         a.js_on_click(callback2) 
         pt.xaxis.major_label_orientation = 0.5
-        pt.sizing_mode='scale_both'
+        pt.sizing_mode='stretch_width'
         layout = Row(pt, multiselect)
         layout2 = Column(a, layout)
         st.bokeh_chart(layout2)
 
 
         #-- end of multiselect source/sink types
+
+        # start of exim_rangetool db
+        exim_rangetool = exim
+        exim_rangetool['date'] = exim_rangetool.index
+        source = ColumnDataSource(exim_rangetool)
+        intertie = 'Quebec total'
+        exim_rangetool_generic = exim_rangetool[intertie].to_frame()
+        exim_rangetool_generic.columns = ['intertie']
+       
+        p_exim_rangetool = figure(height=500, aspect_ratio=16/4, tools="pan, wheel_zoom, xbox_zoom, save",
+        x_axis_type="datetime", x_axis_location="above",
+        background_fill_color="#F0F8FF", x_range=(exim_rangetool['date'].values[0], exim_rangetool['date'].values[-1]))
+        p_exim_rangetool.add_tools(HoverTool(tooltips=[
+            ( 'date and time','@index{%F}'), ('Flow in MW', '@intertie{%0.,2f}')
+            ],
+            formatters={'index':'datetime', 'intertie':'printf'}))
+        p_exim_rangetool.xaxis[0].formatter = DatetimeTickFormatter(months=['%b %d %Y'], days=['%a %b %d\n%Y'], hours=['%a %b %d %I%p\n%Y'])
+        cols = ['MANITOBA', 'MANITOBA SK', 'MICHIGAN', 'MINNESOTA', 'NEW-YORK', 'PQ.AT',
+        'PQ.B5D.B31L', 'PQ.D4Z', 'PQ.D5A', 'PQ.H4Z', 'PQ.H9A', 'PQ.P33C',
+        'PQ.Q4C', 'PQ.X2Y', 'Quebec total']
+        source_orig = ColumnDataSource(exim_rangetool_generic)
+        
+        p_exim_rangetool.line('index', 'intertie', source=source_orig, line_color=tableau_colors[3])
+        p_exim_rangetool.yaxis.axis_label = 'MW'
+        p_exim_rangetool.title = "Hourly Ontario electricity exports\nto (+) and imports from ("+endash+") "+intertie
+
+        p_exim_rangetool.circle('index', 'intertie', source=source_orig, fill_color=tableau_colors[3], line_color=tableau_colors[3])
+        
+        select = figure(title="Drag the middle and edges of the selection box\nto change the date-time range in the plot above",
+        height=300, aspect_ratio=16/4, y_range=p_exim_rangetool.y_range,
+        x_axis_type="datetime", y_axis_type=None,
+        tools="save", background_fill_color='#F0F8FF')
+        
+        range_tool = RangeTool(x_range=p_exim_rangetool.x_range)
+        range_tool.overlay.fill_color ='red'
+        range_tool.overlay.fill_alpha = 0.2
+        
+        select.line('index', 'intertie', source=source_orig, line_color=tableau_colors[3])
+        select.ygrid.grid_line_color = None
+        select.add_tools(range_tool)
+        p_exim_rangetool.sizing_mode = 'stretch_both'
+        select.sizing_mode = 'stretch_both'
+        
+        select_menu = Select(title="Choose an intertie", value=intertie, options=cols)
+        select_menu.sizing_mode = 'stretch_width'
+        callback = CustomJS(args={'source_orig':source_orig, 'source':source, 'intertie':intertie, 'p_exim_rangetool':p_exim_rangetool, 'endash':endash}, code=
+        """
+        const new_intertie = cb_obj.value;
+        const data = source.data;
+        const newData = Object.fromEntries(Object.entries(data).filter(([key]) => key==new_intertie));
+        newData['intertie'] = newData[new_intertie];
+        delete newData[new_intertie];
+        const dt = data['index'];
+        const dt_obj = {'index':source.data['index']};
+        Object.assign(newData, dt_obj);
+        source_orig.data = newData;
+        const new_range_figTitle = `Hourly Ontario electricity exports
+to (+) and imports from (`+endash+`)`;
+        const nrft2 = new_range_figTitle+' '+new_intertie;
+        p_exim_rangetool.title.text = nrft2;
+        """)
+        
+        select_menu.js_on_change('value', callback)
+        plts = [select_menu, p_exim_rangetool, select]
+        #show(column(select_menu, p_exim_rangetool, select))
+        st.bokeh_chart(column(*plts), use_container_width=True)
+        # end of exim_rangetool db
 ## --- WHAT I DO ---
 with st.container():
     V_SPACE(1)
