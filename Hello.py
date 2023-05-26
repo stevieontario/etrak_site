@@ -27,7 +27,7 @@ from random import shuffle
 endash = u'\u2013'
 tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
 PATH = '/home/steveaplin/Documents/eda/'
-#PATH = 'http://canadianenergyissues.com/data/'
+PATH = 'http://canadianenergyissues.com/data/'
 gen_json = pd.read_json(PATH+'ieso_genoutputcap_v7.json')# note version!
 exim = pd.read_json(PATH+'exim_ytd.json')
 exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
