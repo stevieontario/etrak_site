@@ -26,10 +26,10 @@ from random import shuffle
 
 endash = u'\u2013'
 tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
-PATH = '/home/steveaplin/Documents/eda/'
-PATH = 'http://canadianenergyissues.com/data/'
-gen_json = pd.read_json(PATH+'ieso_genoutputcap_v7.json')# note version!
-exim = pd.read_json(PATH+'exim_ytd.json')
+PATH_TO_DATA = '/home/steveaplin/Documents/eda/'
+#PATH_TO_DATA = 'http://canadianenergyissues.com/data/'
+gen_json = pd.read_json(PATH_TO_DATA+'ieso_genoutputcap_v8.json')# note version!
+exim = pd.read_json(PATH_TO_DATA+'exim_ytd.json')
 exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
 
 tools=["pan,wheel_zoom,reset,save,xbox_zoom, ybox_zoom"] # bokeh web tools
@@ -135,8 +135,8 @@ with st.container():
         ldc_vals = ['london', 'synergy north', 'hydro ottawa', 'toronto', 'algoma', 'sudbury', 'kingston', 'enwin']
         ldc_subset = gr.loc[gr.index.str.contains('|'.join(ldc_vals), case=False), 'Year':'Average_Peak_Load_Without_Embedded_Generation_kW']
         
-        dfs = pd.read_json(PATH+'on_weather_stationdata_subset.json').set_index('community_name')
-        dfs_orig = pd.read_json(PATH+'on_weather_stationdata_subset.json').set_index('community_name')
+        dfs = pd.read_json(PATH_TO_DATA+'on_weather_stationdata_subset.json').set_index('community_name')
+        dfs_orig = pd.read_json(PATH_TO_DATA+'on_weather_stationdata_subset.json').set_index('community_name')
         dfs_orig = dfs_orig.astype({'bearing':float, 'dewpoint':float, 'pressure':float, 'humidity':float, 'windspeed':float, 'temp':float, 'visibility':float, 'windchill':float, 'gust':float, 'realTemp':float, 'temp_delta':float, 'dwellings':float, 'ceiling_w':float, 'window_w':float, 'noWindowWall_w':float, 'floor_w':float, 'total_w':float, 'total_w_per_dwelling':float })
         cols = ['community_name.1', 'datehour_ec', 'datehour_my', 'condition', 'temp',
            'dewpoint', 'windchill', 'pressure', 'visibility', 'humidity',
@@ -301,7 +301,7 @@ with st.container():
     else:
 # --- ONTARIO "HEAT" MAP -- 
 
-        df = pd.read_json(PATH+'on_weather_stationdata_noLDC.json').set_index('community_name')
+        df = pd.read_json(PATH_TO_DATA+'on_weather_stationdata_noLDC.json').set_index('community_name')
         #df = pd.read_csv(path+'/data/on_weather_stationdata_noLDC.csv', header=0)
 
 
@@ -449,6 +449,7 @@ with st.container():
         wind_solar_mask = gen.fuel.str.contains('|'.join(wind_solar_mask), case=False)
         gen_ws = gen[wind_solar_mask]
         gen_nws = gen[~wind_solar_mask] # nws = no wind, no solar
+        print('gen_nws.columns: ', gen_nws.columns)
         gd = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
         ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
         
@@ -713,7 +714,7 @@ $ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $
         newdf = gd.copy()
         newdf['Total'] = newdf.sum(axis=1)
         
-        tdf = pd.read_json(PATH+'zonedem_since_2003.json')
+        tdf = pd.read_json(PATH_TO_DATA+'zonedem_since_2003.json')
         #tdf = tdf.set_index(tdf.datehour)
         tdf.index = pd.to_datetime(tdf.index)
         #del tdf['datehour']
