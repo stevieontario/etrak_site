@@ -450,9 +450,10 @@ with st.container():
         wind_solar_mask = gen.fuel.str.contains('|'.join(wind_solar_mask), case=False)
         gen_ws = gen[wind_solar_mask]
         gen_nws = gen[~wind_solar_mask] # nws = no wind, no solar
-        print('gen_nws.columns: ', gen_nws.columns)
+        print('gen_nws.head: ', gen_nws[gen_nws['fuel']=='HYDRO'].info())
+        test = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
         gd = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
-        print(gd.head())
+        print('test head', test.head())
         ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
         
         nuke_wind = grFuel.capfactor.unstack()[['NUCLEAR', 'WIND']]
