@@ -1,6 +1,7 @@
 from PIL import Image
 import streamlit as st
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import numpy as np
 import requests
 import os
@@ -26,8 +27,8 @@ from random import shuffle
 
 endash = u'\u2013'
 tableau_colors = ["#4e79a7","#f28e2c","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ab", "red", "blue"]
-PATH_TO_DATA = '/home/steveaplin/Documents/eda/'
-#PATH_TO_DATA = 'http://canadianenergyissues.com/data/'
+#PATH_TO_DATA = '/home/steveaplin/Documents/eda/'
+PATH_TO_DATA = 'http://canadianenergyissues.com/data/'
 gen_json = pd.read_json(PATH_TO_DATA+'ieso_genoutputcap_v8.json')# note version!
 exim = pd.read_json(PATH_TO_DATA+'exim_ytd.json')
 exim = exim.set_index(pd.to_datetime(exim.index, unit='ms'))
@@ -451,6 +452,7 @@ with st.container():
         gen_nws = gen[~wind_solar_mask] # nws = no wind, no solar
         print('gen_nws.columns: ', gen_nws.columns)
         gd = gen_nws.groupby([gen_nws.index, 'unit']).mean().output.unstack()
+        print(gd.head())
         ws = gen_ws.groupby([gen_ws.index, 'unit']).mean().output.unstack()
         
         nuke_wind = grFuel.capfactor.unstack()[['NUCLEAR', 'WIND']]
